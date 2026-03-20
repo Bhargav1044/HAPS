@@ -1,0 +1,192 @@
+<div class="form-wrapper">
+  <div class="form-container">
+    <form id="gstr9Form">
+      <div class="form-grid">
+        <!-- GST -->
+        <div class="form-group">
+          <label>GST No</label>
+          <div class="input-box">
+            <i class="fas fa-id-card"></i>
+            <input id="gst" maxlength="15" required pattern="[0-9A-Z]{15}" />
+          </div>
+        </div>
+
+        <!-- EMPTY -->
+        <div></div>
+
+        <!-- GSTR4 ARN -->
+        <div class="form-group">
+          <label>GSTR9 ARN</label>
+
+          <div class="input-box dropdown">
+            <i class="fas fa-list"></i>
+            <select id="g9Select" required>
+              <option disabled selected>Select ARN Status</option>
+              <option>Filed by Client</option>
+              <option>Client Exited</option>
+              <option>Cancelled</option>
+              <option>NA</option>
+              <option value="manual">Enter Manually</option>
+            </select>
+          </div>
+
+          <div
+            class="input-box"
+            id="g9ManualBox"
+            style="display: none; margin-top: 8px"
+          >
+            <i class="fas fa-keyboard"></i>
+            <input placeholder="Enter ARN Number" id="g9Manual" />
+          </div>
+        </div>
+
+        <!-- GSTR4 DATE -->
+        <div class="form-group">
+          <label>Filing Date</label>
+          <div class="input-box">
+            <i class="fas fa-calendar-day"></i>
+            <input type="date" required />
+          </div>
+        </div>
+
+      <button class="form-btn">Update</button>
+    </form>
+  </div>
+</div>
+
+<!-- ================= STYLE ================= -->
+<style>
+  .form-wrapper {
+    height: calc(100vh - 80px);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    margin-top: 20px;
+  }
+
+  .form-container {
+    width: 100%;
+    max-width: 800px;
+
+    padding: 25px;
+    border-radius: 14px;
+
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(14px);
+
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .form-group label {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .input-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    border-radius: 8px;
+    padding-left: 35px;
+
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+  }
+
+  .input-box i {
+    position: absolute;
+    left: 10px;
+    color: #6b7280;
+  }
+
+  .input-box input,
+  .input-box select {
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 14px;
+    color: #111;
+  }
+
+  .input-box select {
+    appearance: none;
+    cursor: pointer;
+    min-height: 36px;
+  }
+
+  .input-box.dropdown::after {
+    content: "▼";
+    position: absolute;
+    right: 10px;
+    font-size: 10px;
+    color: #6b7280;
+  }
+
+  .input-box:focus-within {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+  }
+
+  .form-btn {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    background: #27334d;
+    color: white;
+    font-weight: 600;
+    width: 120px;
+  }
+
+  @media (max-width: 768px) {
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<!-- ================= SCRIPT ================= -->
+<script>
+  (function () {
+    const g9Select = document.getElementById("g9Select");
+    const g9ManualBox = document.getElementById("g9ManualBox");
+    const g9Manual = document.getElementById("g9Manual");
+
+    const g9cSelect = document.getElementById("g9cSelect");
+    const g9cManualBox = document.getElementById("g9cManualBox");
+    const g9cManual = document.getElementById("g9cManual");
+
+    g9Select?.addEventListener("change", () => {
+      if (g9Select.value === "manual") {
+        g9ManualBox.style.display = "flex";
+        g9Manual.required = true;
+      } else {
+        g9ManualBox.style.display = "none";
+        g9Manual.required = false;
+        g9Manual.value = "";
+      }
+    });
+
+    g9cSelect?.addEventListener("change", () => {
+      if (g9cSelect.value === "manual") {
+        g9cManualBox.style.display = "flex";
+        g9cManual.required = true;
+      } else {
+        g9cManualBox.style.display = "none";
+        g9cManual.required = false;
+        g9cManual.value = "";
+      }
+    });
+  })();
+</script>

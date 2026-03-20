@@ -1,0 +1,119 @@
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Background */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Back Button */
+.back-btn {
+  position: fixed;
+  top: 15px;
+  left: 20px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  background: white;
+  color: #667eea;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* Container */
+.form-container {
+  background: white;
+  width: 100%;
+  max-width: 650px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* Header */
+.header {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+.header h1 {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+.header p {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+/* Form */
+form {
+  padding: 20px;
+}
+
+/* Table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 15px;
+}
+
+tr {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+td {
+  padding: 8px 6px;
+  font-size: 13px;
+}
+
+.label {
+  font-weight: 600;
+  color: #374151;
+  width: 35%;
+}
+
+/* Inputs */
+input,
+select {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  font-size: 13px;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+/* Button */
+.submit-btn {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background: #667eea;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.submit-btn:hover {
+  background: #5a67d8;
+}
