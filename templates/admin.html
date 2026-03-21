@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Admin Dashboard — Company Portal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_dashboard.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}" />
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  </head>
+
+  <body>
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="logo">
+        <i class="fas fa-user-shield"></i>
+        <span>Admin Portal</span>
+      </div>
+
+      <div class="menu" id="adminMenu">
+        <div class="menu-item active" onclick="navigate('/admin/users', 'User Management', this)">
+          <i class="fas fa-users"></i><span>User Management</span>
+        </div>
+
+        <div class="menu-section">GSTR1 & FORM 3B</div>
+        <div class="menu-item" onclick="navigate('/GSTR1_Form3B/add', 'Add New Data', this)">
+          <i class="fas fa-file"></i><span>Add New Data</span>
+        </div>
+        <div class="menu-item" onclick="navigate('/GSTR1_Form3B/arn', 'Update GSTR1 ARN', this)">
+          <i class="fas fa-pen"></i><span>Update GSTR1 ARN</span>
+        </div>
+        <div class="menu-item" onclick="navigate('/GSTR1_Form3B/form3b', 'Update Form 3B ARN', this)">
+          <i class="fas fa-pen"></i><span>Update Form 3B ARN</span>
+        </div>
+        <div class="menu-item" onclick="navigate('/GSTR1_Form3B/search', 'Search & Update', this)">
+          <i class="fas fa-search"></i><span>Search & Update</span>
+        </div>
+        <div class="menu-item" onclick="navigate('/GSTR1_Form3B/view', 'View Data', this)">
+          <i class="fas fa-database"></i><span>View Data</span>
+        </div>
+
+        <div class="menu-section">GSTR9 & 9C</div>
+        <div class="menu-item" onclick="navigate('/gstr9/arn', 'Update GSTR9 ARN', this)">
+          <i class="fas fa-pen"></i><span>Update ARN</span>
+        </div>
+        <div class="menu-item" onclick="navigate('/gstr9/view', 'View Data', this)">
+          <i class="fas fa-database"></i><span>View Data</span>
+        </div>
+
+        <div class="menu-section">CMP-08</div>
+        <div class="menu-item" onclick="navigate('/cmp/add', 'Add New Data', this)">
+          <i class="fas fa-file"></i><span>Add New Data</span>
+        </div>
+        <div class="menu-item" onclick="navigate('/cmp/arn', 'Update ARN', this)">
+          <i class="fas fa-pen"></i><span>Update ARN</span>
+        </div>
+        <div class="menu-item" onclick="navigate('/cmp/search', 'Search & Update', this)">
+          <i class="fas fa-search"></i><span>Search & Update</span>
+        </div>
+        <div class="menu-item" onclick="navigate('/cmp/view', 'View Data', this)">
+          <i class="fas fa-database"></i><span>View Data</span>
+        </div>
+
+        <div class="menu-section">GSTR4</div>
+        <div class="menu-item" onclick="navigate('/gstr4/arn', 'Update GSTR ARN', this)">
+          <i class="fas fa-pen"></i><span>Update ARN</span>
+        </div>
+        <div class="menu-item" onclick="navigate('/gstr4/view', 'View Data', this)">
+          <i class="fas fa-database"></i><span>View Data</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+      <!-- TOPBAR -->
+      <div class="topbar" style="background: transparent; border: none; align-items: center; display: flex; justify-content: space-between; margin-bottom: 20px;">
+        <h1 id="pageTitle" style="font-size: 24px; color: #fff;">User Management</h1>
+        <div class="top-actions">
+          <button class="logout" id="logoutBtn" style="background: #27334d; color: white; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer;">Logout</button>
+        </div>
+      </div>
+
+      <!-- CONTENT -->
+      <div id="formArea">
+        <div style="text-align: center; color: white; margin-top: 50px;">
+           <i class="fas fa-circle-notch fa-spin fa-3x"></i>
+           <p style="margin-top: 15px;">Loading...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Core App Logic -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+    <script>
+      async function navigate(url, title, element) {
+        try {
+          if (element) {
+             document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+             element.classList.add('active');
+          }
+
+          document.getElementById("pageTitle").innerText = title;
+          
+          const formArea = document.getElementById("formArea");
+          formArea.innerHTML = `<div style="text-align: center; color: white; margin-top: 50px;">
+                                  <i class="fas fa-circle-notch fa-spin fa-3x"></i>
+                                  <p style="margin-top: 15px;">Loading...</p>
+                                </div>`;
+
+          const res = await fetch(url);
+          if (!res.ok) {
+            alert("Unable to load page");
+            formArea.innerHTML = `<p style="color: red;">Error loading page.</p>`;
+            return;
+          }
+
+          const html = await res.text();
+          formArea.style.display = "block";
+          formArea.innerHTML = html;
+
+          // Re-execute scripts
+          const scripts = formArea.querySelectorAll("script");
+          scripts.forEach((oldScript) => {
+            const newScript = document.createElement("script");
+            if (oldScript.src) {
+              newScript.src = oldScript.src;
+            } else {
+              newScript.textContent = oldScript.textContent;
+            }
+            document.body.appendChild(newScript);
+          });
+        } catch (error) {
+          console.error("Navigation failed", error);
+          alert("Something went wrong while loading this page.");
+        }
+      }
+
+      document.getElementById("logoutBtn")?.addEventListener("click", () => {
+        localStorage.removeItem("username");
+        // Also clear any admin session flags if used and redirect
+        window.location.href = "/login";
+      });
+
+      // Initially load the user management view
+      window.onload = () => {
+         // Identify as admin so view pages can show delete buttons
+         window.isAdmin = true;
+         navigate('/admin/users', 'User Management', document.querySelector('.menu-item.active'));
+      };
+    </script>
+  </body>
+</html>
