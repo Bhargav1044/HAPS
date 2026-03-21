@@ -2,7 +2,6 @@
   <div class="form-container">
     <form id="gstr9Form">
       <div class="form-grid">
-        <!-- GST -->
         <div class="form-group">
           <label>GST No</label>
           <div class="input-box">
@@ -11,13 +10,10 @@
           </div>
         </div>
 
-        <!-- EMPTY -->
         <div></div>
 
-        <!-- GSTR9 ARN -->
         <div class="form-group">
           <label>GSTR9 ARN</label>
-
           <div class="input-box dropdown">
             <i class="fas fa-list"></i>
             <select id="g9Select" required>
@@ -29,7 +25,6 @@
               <option value="manual">Enter Manually</option>
             </select>
           </div>
-
           <div
             class="input-box"
             id="g9ManualBox"
@@ -40,19 +35,16 @@
           </div>
         </div>
 
-        <!-- GSTR9 DATE -->
         <div class="form-group">
-          <label>Filing Date</label>
+          <label>GSTR9 Filing Date</label>
           <div class="input-box">
             <i class="fas fa-calendar-day"></i>
-            <input type="date" required />
+            <input id="g9Date" type="date" required />
           </div>
         </div>
 
-        <!-- GSTR9C ARN -->
         <div class="form-group">
           <label>GSTR9C ARN</label>
-
           <div class="input-box dropdown">
             <i class="fas fa-list"></i>
             <select id="g9cSelect" required>
@@ -64,7 +56,6 @@
               <option value="manual">Enter Manually</option>
             </select>
           </div>
-
           <div
             class="input-box"
             id="g9cManualBox"
@@ -75,22 +66,21 @@
           </div>
         </div>
 
-        <!-- GSTR9C DATE -->
         <div class="form-group">
-          <label>Filing Date</label>
+          <label>GSTR9C Filing Date</label>
           <div class="input-box">
             <i class="fas fa-calendar-day"></i>
-            <input type="date" required />
+            <input id="g9cDate" type="date" required />
           </div>
         </div>
       </div>
 
-      <button class="form-btn">Update</button>
+      <button class="form-btn" type="submit">Update</button>
     </form>
+    <p id="gstr9Message" style="margin-top: 10px; font-weight: 600"></p>
   </div>
 </div>
 
-<!-- ================= STYLE ================= -->
 <style>
   .form-wrapper {
     height: calc(100vh - 80px);
@@ -103,13 +93,10 @@
   .form-container {
     width: 100%;
     max-width: 800px;
-
     padding: 25px;
     border-radius: 14px;
-
     background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(14px);
-
     border: 1px solid rgba(255, 255, 255, 0.25);
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   }
@@ -130,10 +117,8 @@
     position: relative;
     display: flex;
     align-items: center;
-
     border-radius: 8px;
     padding-left: 35px;
-
     background: rgba(255, 255, 255, 0.15);
     border: 1px solid rgba(255, 255, 255, 0.35);
   }
@@ -192,7 +177,6 @@
   }
 </style>
 
-<!-- ================= SCRIPT ================= -->
 <script>
   (function () {
     const g9Select = document.getElementById("g9Select");
@@ -202,6 +186,9 @@
     const g9cSelect = document.getElementById("g9cSelect");
     const g9cManualBox = document.getElementById("g9cManualBox");
     const g9cManual = document.getElementById("g9cManual");
+
+    const form = document.getElementById("gstr9Form");
+    const message = document.getElementById("gstr9Message");
 
     g9Select?.addEventListener("change", () => {
       if (g9Select.value === "manual") {
@@ -222,6 +209,41 @@
         g9cManualBox.style.display = "none";
         g9cManual.required = false;
         g9cManual.value = "";
+      }
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const gst = document.getElementById("gst").value.trim().toUpperCase();
+      if (!/^[0-9A-Z]{15}$/.test(gst)) {
+        alert("GST must be 15 uppercase alphanumeric");
+        return;
+      }
+
+      const gstr9Arn =
+        g9Select.value === "manual" ? g9Manual.value.trim() : g9Select.value;
+      const gstr9cArn =
+        g9cSelect.value === "manual" ? g9cManual.value.trim() : g9cSelect.value;
+
+      const response = await fetch("/api/gstr9/update-arn", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gst_no: gst,
+          gstr9_arn: gstr9Arn,
+          gstr9_date: document.getElementById("g9Date").value,
+          gstr9c_arn: gstr9cArn,
+          gstr9c_date: document.getElementById("g9cDate").value,
+        }),
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        message.textContent = "Updated successfully";
+        message.style.color = "#166534";
+      } else {
+        message.textContent = result.error || "Update failed";
+        message.style.color = "#b91c1c";
       }
     });
   })();

@@ -6,7 +6,7 @@
           <label>Name</label>
           <div class="input-box">
             <i class="fas fa-user"></i>
-            <input type="text" required />
+            <input id="name" type="text" required />
           </div>
         </div>
 
@@ -22,7 +22,7 @@
           <label>ID</label>
           <div class="input-box">
             <i class="fas fa-hashtag"></i>
-            <input type="number" required />
+            <input id="userId" type="text" required />
           </div>
         </div>
 
@@ -30,7 +30,7 @@
           <label>Password</label>
           <div class="input-box">
             <i class="fas fa-lock"></i>
-            <input type="password" required />
+            <input id="password" type="text" required />
           </div>
         </div>
 
@@ -38,7 +38,7 @@
           <label>Concern Person</label>
           <div class="input-box">
             <i class="fas fa-user-tie"></i>
-            <input required />
+            <input id="concernPerson" required />
           </div>
         </div>
 
@@ -62,7 +62,9 @@
           <label>Periodicity</label>
           <div class="input-box dropdown">
             <i class="fas fa-calendar"></i>
-            <select id="monthList" required></select>
+            <select id="periodicity" required>
+              <option value="Monthly" selected>Monthly</option>
+            </select>
           </div>
         </div>
 
@@ -83,8 +85,9 @@
         </div>
       </div>
 
-      <button class="form-btn">Submit</button>
+      <button class="form-btn" type="submit">Submit</button>
     </form>
+    <p id="formMessage" style="margin-top: 10px; font-weight: 600"></p>
   </div>
 </div>
 
@@ -267,20 +270,31 @@
       "Mar 2027",
     ];
 
-    const monthList = document.getElementById("monthList");
+    const periodicity = document.getElementById("periodicity");
     const start = document.getElementById("startMonth");
     const end = document.getElementById("endMonth");
+    const form = document.getElementById("gstrForm");
+    const message = document.getElementById("formMessage");
 
-    if (!monthList || !start || !end) return;
+    if (!periodicity || !start || !end || !form) return;
+
+    // 🔥 EMAIL FORMAT FUNCTION (ONLY ADDITION)
+    function formatEmail(email) {
+      if (!email) return "";
+      email = email.toLowerCase().trim();
+
+      if (!email.endsWith("@gmail.com")) {
+        email = email.split("@")[0] + "@gmail.com";
+      }
+      return email;
+    }
 
     // default
-    monthList.innerHTML = `<option disabled selected>Select Month</option>`;
     start.innerHTML = `<option disabled selected>Select Month</option>`;
     end.innerHTML = `<option disabled selected>Select Month</option>`;
 
     // fill
     months.forEach((m) => {
-      monthList.innerHTML += `<option value="${m}">${m}</option>`;
       start.innerHTML += `<option value="${m}">${m}</option>`;
       end.innerHTML += `<option value="${m}">${m}</option>`;
     });
@@ -292,10 +306,68 @@
       end.innerHTML = `<option disabled selected>Select Month</option>`;
 
       months.forEach((m, i) => {
-        if (i > startIndex) {
+        if (i >= startIndex) {
           end.innerHTML += `<option value="${m}">${m}</option>`;
         }
       });
+    });
+
+    function getMonthsInRange(startMonth, endMonth) {
+      const startIndex = months.indexOf(startMonth);
+      const endIndex = months.indexOf(endMonth);
+      if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
+        return [];
+      }
+      return months.slice(startIndex, endIndex + 1);
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const payload = {
+        name: document.getElementById("name").value.trim(),
+        gst_no: document.getElementById("gst").value.trim().toUpperCase(),
+        user_id: document.getElementById("userId").value.trim(),
+        password: document.getElementById("password").value.trim(),
+        concern_person: document.getElementById("concernPerson").value.trim(),
+        contact_no: document.getElementById("phone").value.trim(),
+
+        // 🔥 APPLY EMAIL FIX HERE ONLY
+        email_id: formatEmail(document.getElementById("email").value),
+
+        periodicity: periodicity.value,
+        months: getMonthsInRange(start.value, end.value),
+      };
+
+      if (payload.months.length === 0) {
+        alert("Select a valid month range");
+        return;
+      }
+
+      if (!/^[0-9A-Z]{15}$/.test(payload.gst_no)) {
+        alert("GST must be 15 uppercase alphanumeric");
+        return;
+      }
+
+      const response = await fetch("/api/gstr1/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+      if (response.ok && result.success) {
+        if (message) {
+          message.textContent = `Saved ${payload.months.length} month entries successfully`;
+          message.style.color = "#166534";
+        }
+        form.reset();
+      } else {
+        if (message) {
+          message.textContent = result.error || "Failed to save";
+          message.style.color = "#b91c1c";
+        }
+      }
     });
   })();
 </script>

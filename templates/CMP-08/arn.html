@@ -1,17 +1,7 @@
 <div class="form-wrapper">
   <div class="form-container">
-    <form id="updateForm">
+    <form id="cmpArnForm">
       <div class="form-grid">
-        <!-- NAME -->
-        <div class="form-group">
-          <label>Name</label>
-          <div class="input-box">
-            <i class="fas fa-user"></i>
-            <input type="text" required />
-          </div>
-        </div>
-
-        <!-- GST -->
         <div class="form-group">
           <label>GST No</label>
           <div class="input-box">
@@ -20,63 +10,49 @@
           </div>
         </div>
 
-        <!-- ID -->
         <div class="form-group">
-          <label>ID</label>
-          <div class="input-box">
-            <i class="fas fa-hashtag"></i>
-            <input type="number" required />
-          </div>
-        </div>
-
-        <!-- PASSWORD -->
-        <div class="form-group">
-          <label>Password</label>
-          <div class="input-box">
-            <i class="fas fa-lock"></i>
-            <input type="password" required />
-          </div>
-        </div>
-
-        <!-- CONCERN -->
-        <div class="form-group">
-          <label>Concern Person</label>
-          <div class="input-box">
-            <i class="fas fa-user-tie"></i>
-            <input required />
-          </div>
-        </div>
-
-        <!-- CONTACT -->
-        <div class="form-group">
-          <label>Contact No</label>
-          <div class="input-box">
-            <i class="fas fa-phone"></i>
-            <input maxlength="10" pattern="[0-9]{10}" required />
-          </div>
-        </div>
-
-        <!-- EMAIL -->
-        <div class="form-group">
-          <label>Email</label>
-          <div class="input-box">
-            <i class="fas fa-envelope"></i>
-            <input type="email" required />
-          </div>
-        </div>
-
-        <!-- PERIODICITY -->
-        <div class="form-group">
-          <label>Periodicity</label>
+          <label>Quarter</label>
           <div class="input-box dropdown">
             <i class="fas fa-calendar"></i>
-            <select id="monthList" required></select>
+            <select id="quarter" required></select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>CMP-08 ARN</label>
+          <div class="input-box dropdown">
+            <i class="fas fa-list"></i>
+            <select id="arnSelect" required>
+              <option disabled selected>Select ARN Status</option>
+              <option>Filed by Client</option>
+              <option>Client Exited</option>
+              <option>Cancelled</option>
+              <option>NA</option>
+              <option value="manual">Enter Manually</option>
+            </select>
+          </div>
+          <div
+            class="input-box"
+            id="manualArnBox"
+            style="display: none; margin-top: 8px"
+          >
+            <i class="fas fa-keyboard"></i>
+            <input id="manualArn" placeholder="Enter ARN Number" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Filing Date</label>
+          <div class="input-box">
+            <i class="fas fa-calendar-day"></i>
+            <input id="filingDate" type="date" required />
           </div>
         </div>
       </div>
 
-      <button class="form-btn">Update</button>
+      <button class="form-btn" type="submit">Update</button>
     </form>
+    <p id="cmpArnMessage" style="margin-top: 10px; font-weight: 600"></p>
   </div>
 </div>
 
@@ -89,12 +65,9 @@
     max-width: 900px;
     margin: auto;
     padding: 25px;
-
     border-radius: 14px;
-
     background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(14px);
-
     border: 1px solid rgba(255, 255, 255, 0.25);
   }
 
@@ -113,10 +86,8 @@
     position: relative;
     display: flex;
     align-items: center;
-
     border-radius: 8px;
     padding-left: 35px;
-
     background: rgba(255, 255, 255, 0.15);
     border: 1px solid rgba(255, 255, 255, 0.35);
   }
@@ -163,39 +134,66 @@
 
 <script>
   (function () {
-    const months = [
-      "Mar 2026",
-      "Apr 2026",
-      "May 2026",
-      "Jun 2026",
-      "Jul 2026",
-      "Aug 2026",
-      "Sep 2026",
-      "Oct 2026",
-      "Nov 2026",
-      "Dec 2026",
-      "Jan 2027",
-      "Feb 2027",
-      "Mar 2027",
-    ];
+    const quarter = document.getElementById("quarter");
+    const arnSelect = document.getElementById("arnSelect");
+    const manualArnBox = document.getElementById("manualArnBox");
+    const manualArn = document.getElementById("manualArn");
+    const form = document.getElementById("cmpArnForm");
+    const message = document.getElementById("cmpArnMessage");
 
-    const monthList = document.getElementById("monthList");
-
-    monthList.innerHTML = `<option disabled selected>Select Month</option>`;
-
-    months.forEach((m) => {
-      monthList.innerHTML += `<option>${m}</option>`;
+    [
+      "Apr - Jun 2026",
+      "Jul - Sep 2026",
+      "Oct - Dec 2026",
+      "Jan - Mar 2027",
+    ].forEach((q) => {
+      const option = document.createElement("option");
+      option.value = q;
+      option.textContent = q;
+      quarter.appendChild(option);
     });
 
-    document
-      .getElementById("updateForm")
-      .addEventListener("submit", function (e) {
-        const gst = document.getElementById("gst").value;
+    arnSelect.addEventListener("change", () => {
+      if (arnSelect.value === "manual") {
+        manualArnBox.style.display = "flex";
+        manualArn.required = true;
+      } else {
+        manualArnBox.style.display = "none";
+        manualArn.required = false;
+        manualArn.value = "";
+      }
+    });
 
-        if (!/^[0-9A-Z]{15}$/.test(gst)) {
-          alert("GST must be 15 uppercase alphanumeric");
-          e.preventDefault();
-        }
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const gst = document.getElementById("gst").value.trim().toUpperCase();
+      if (!/^[0-9A-Z]{15}$/.test(gst)) {
+        alert("GST must be 15 uppercase alphanumeric");
+        return;
+      }
+
+      const arnValue =
+        arnSelect.value === "manual" ? manualArn.value.trim() : arnSelect.value;
+
+      const response = await fetch("/api/cmp/update-arn", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gst_no: gst,
+          quarter: quarter.value,
+          arn: arnValue,
+          date: document.getElementById("filingDate").value,
+        }),
       });
+
+      const result = await response.json();
+      if (response.ok && result.success) {
+        message.textContent = "Updated successfully";
+        message.style.color = "#166534";
+      } else {
+        message.textContent = result.error || "Update failed";
+        message.style.color = "#b91c1c";
+      }
+    });
   })();
 </script>

@@ -1,7 +1,7 @@
 <div class="form-wrapper">
   <!-- HEADER -->
   <div class="table-header">
-    <h2>GSTR4 Records</h2>
+    <h2>GSTR1 & Form 3B ARN</h2>
 
     <div class="header-actions">
       <input type="text" id="searchInput" placeholder="Search..." />
@@ -13,24 +13,32 @@
 
   <!-- 🔥 SINGLE LINE FILTER BAR -->
   <div class="filter-bar">
-    <!-- ARN STATUS FILTER -->
+    <!-- GSTR1 FILTER -->
     <div class="filter-group">
-      <label>GSTR4 Status</label>
-      <select id="arnFilter">
+      <label>GSTR1 Status</label>
+      <select id="g1Filter">
         <option value="">All</option>
         <option value="filled">Filled</option>
         <option value="empty">Empty</option>
       </select>
     </div>
 
-    <!-- YEAR FILTER -->
+    <!-- FORM 3B FILTER -->
     <div class="filter-group">
-      <label>Filing Year</label>
-      <select id="yearFilter">
+      <label>Form 3B Status</label>
+      <select id="f3bFilter">
         <option value="">All</option>
-        <option>2026</option>
-        <option>2027</option>
+        <option value="filled">Filled</option>
+        <option value="empty">Empty</option>
       </select>
+    </div>
+
+    <!-- RANGE -->
+    <div class="range-inline">
+      <label>Month Range</label>
+      <input type="range" id="startRange" min="0" max="12" value="0" />
+      <input type="range" id="endRange" min="0" max="12" value="12" />
+      <span id="rangeLabel"></span>
     </div>
   </div>
 
@@ -47,21 +55,23 @@
           <th>Contact</th>
           <th>Email</th>
           <th>Periodicity</th>
-          <th>GSTR4 ARN</th>
-          <th>GSTR4 Filing Date</th>
+          <th>Month</th>
+          <th>GSTR1 ARN</th>
+          <th>GSTR1 Date</th>
+          <th>Form 3B ARN</th>
+          <th>Form 3B Date</th>
         </tr>
       </thead>
 
       <tbody id="tableBody">
         <tr>
-          <td colspan="10" class="loading">Loading...</td>
+          <td colspan="13" class="loading">Loading...</td>
         </tr>
       </tbody>
     </table>
   </div>
 </div>
 
-<!-- ================= STYLE ================= -->
 <style>
   .form-wrapper {
     padding: 15px;
@@ -82,7 +92,6 @@
     padding: 10px;
     border-radius: 10px;
     border: 1px solid #cbd5e1;
-    width: 220px;
   }
 
   .header-actions button {
@@ -115,7 +124,7 @@
   /* 🔥 FILTER BAR */
   .filter-bar {
     display: flex;
-    gap: 20px;
+    gap: 25px;
     align-items: center;
     margin-bottom: 18px;
     flex-wrap: wrap;
@@ -131,7 +140,22 @@
     padding: 8px;
     border-radius: 8px;
     border: 1px solid #cbd5e1;
-    min-width: 160px;
+    min-width: 150px;
+  }
+
+  .range-inline {
+    display: flex;
+    flex-direction: column;
+    font-size: 13px;
+  }
+
+  .range-inline input {
+    width: 200px;
+  }
+
+  #rangeLabel {
+    font-size: 12px;
+    font-weight: 600;
   }
 
   .table-container {
@@ -151,8 +175,6 @@
     position: sticky;
     top: 0;
     background: rgba(255, 255, 255, 0.95);
-    color: #27334d;
-    font-weight: 700;
     padding: 12px;
   }
 
@@ -164,10 +186,6 @@
     background: rgba(37, 99, 235, 0.08);
   }
 
-  .loading {
-    text-align: center;
-  }
-
   .null {
     background: #e11d48;
     color: white;
@@ -177,31 +195,55 @@
   }
 </style>
 
-<!-- ================= SCRIPT ================= -->
 <script>
   (function () {
+    const months = [
+      "Mar 2026",
+      "Apr 2026",
+      "May 2026",
+      "Jun 2026",
+      "Jul 2026",
+      "Aug 2026",
+      "Sep 2026",
+      "Oct 2026",
+      "Nov 2026",
+      "Dec 2026",
+      "Jan 2027",
+      "Feb 2027",
+      "Mar 2027",
+    ];
+
     let data = [];
+
+    const startRange = document.getElementById("startRange");
+    const endRange = document.getElementById("endRange");
+    const label = document.getElementById("rangeLabel");
+
+    function updateLabel() {
+      label.innerText = `${months[startRange.value]} → ${months[endRange.value]}`;
+    }
 
     function applyFilters() {
       let filtered = [...data];
 
       const search = document.getElementById("searchInput").value.toLowerCase();
-      const year = document.getElementById("yearFilter").value;
-      const arnFilter = document.getElementById("arnFilter").value;
+      const g1 = document.getElementById("g1Filter").value;
+      const f3b = document.getElementById("f3bFilter").value;
 
-      if (arnFilter === "empty") {
-        filtered = filtered.filter((d) => !d.gstr4arn || !d.gstr4date);
-      }
+      if (g1 === "empty")
+        filtered = filtered.filter((d) => !d.gstr1Arn || !d.gstr1Date);
+      if (g1 === "filled")
+        filtered = filtered.filter((d) => d.gstr1Arn && d.gstr1Date);
 
-      if (arnFilter === "filled") {
-        filtered = filtered.filter((d) => d.gstr4arn && d.gstr4date);
-      }
+      if (f3b === "empty")
+        filtered = filtered.filter((d) => !d.form3bArn || !d.form3bDate);
+      if (f3b === "filled")
+        filtered = filtered.filter((d) => d.form3bArn && d.form3bDate);
 
-      if (year) {
-        filtered = filtered.filter(
-          (d) => d.gstr4date && d.gstr4date.includes(year),
-        );
-      }
+      filtered = filtered.filter((d) => {
+        const idx = months.indexOf(d.month);
+        return idx >= startRange.value && idx <= endRange.value;
+      });
 
       if (search) {
         filtered = filtered.filter((d) =>
@@ -216,52 +258,38 @@
       const body = document.getElementById("tableBody");
 
       if (rows.length === 0) {
-        body.innerHTML = `<tr><td colspan="10">No Data Found</td></tr>`;
+        body.innerHTML = `<tr><td colspan="13">No Data Found</td></tr>`;
         return;
       }
 
       body.innerHTML = rows
         .map(
           (r) => `
-      <tr>
-        <td>${r.name}</td>
-        <td>${r.gst || "-"}</td>
-        <td>${r.id}</td>
-        <td>${r.password}</td>
-        <td>${r.concern}</td>
-        <td>${r.contact}</td>
-        <td>${r.email}</td>
-        <td>${r.periodicity}</td>
-
-        <td>${r.gstr4arn ? r.gstr4arn : '<span class="null">NULL</span>'}</td>
-        <td>${r.gstr4date ? r.gstr4date : '<span class="null">NULL</span>'}</td>
-
-        ${
-          window.isAdmin
-            ? `
-        <td>
-          <button style="background:#e11d48;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;font-size:12px;"
-          onclick="deleteRecord('${r.db_id}','gstr4')">Delete</button>
-        </td>`
-            : ""
-        }
-      </tr>
-    `,
+        <tr>
+          <td>${r.name}</td>
+          <td>${r.gst || "-"}</td>
+          <td>${r.id}</td>
+          <td>${r.password}</td>
+          <td>${r.concern}</td>
+          <td>${r.contact}</td>
+          <td>${r.email}</td>
+          <td>${r.periodicity}</td>
+          <td>${r.month}</td>
+          <td>${r.gstr1Arn ? r.gstr1Arn : '<span class="null">NULL</span>'}</td>
+          <td>${r.gstr1Date ? r.gstr1Date : '<span class="null">NULL</span>'}</td>
+          <td>${r.form3bArn ? r.form3bArn : '<span class="null">NULL</span>'}</td>
+          <td>${r.form3bDate ? r.form3bDate : '<span class="null">NULL</span>'}</td>
+        </tr>
+      `,
         )
         .join("");
     }
 
     async function loadRows() {
-      if (window.isAdmin && !document.getElementById("actionTh")) {
-        const theadTr = document.querySelector("table thead tr");
-        if (theadTr) theadTr.innerHTML += '<th id="actionTh">Action</th>';
-      }
-
-      const response = await fetch("/api/gstr4/list");
+      const response = await fetch("/api/gstr1/list");
       const result = await response.json();
 
       data = (result.data || []).map((row) => ({
-        db_id: row.id,
         name: row.name || "-",
         gst: row.gst_no || "",
         id: row.user_id || "-",
@@ -270,54 +298,55 @@
         contact: row.contact_no || "-",
         email: row.email_id || "-",
         periodicity: row.periodicity || "-",
-        gstr4arn: row.gstr4_arn_no || "",
-        gstr4date: row.gstr4_filing_date || "",
+        month: row.month || "",
+        gstr1Arn: row.gstr1_arn_no || "",
+        gstr1Date: row.gstr1_filing_date || "",
+        form3bArn: row.form3b_arn_no || "",
+        form3bDate: row.form3b_filing_date || "",
       }));
 
       renderTable(data);
     }
 
-    window.deleteRecord = async function (id, type) {
-      if (!confirm("Are you sure you want to delete this record?")) return;
-
-      const res = await fetch(`/api/admin/data/delete_${type}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-
-      if (res.ok) loadRows();
-      else alert("Delete failed");
+    startRange.oninput = () => {
+      updateLabel();
+      applyFilters();
+    };
+    endRange.oninput = () => {
+      updateLabel();
+      applyFilters();
     };
 
     document
       .getElementById("searchInput")
       .addEventListener("input", applyFilters);
     document
-      .getElementById("yearFilter")
+      .getElementById("g1Filter")
       .addEventListener("change", applyFilters);
     document
-      .getElementById("arnFilter")
+      .getElementById("f3bFilter")
       .addEventListener("change", applyFilters);
 
     window.resetFilters = async function () {
       const btn = document.getElementById("refreshBtn");
 
-      // 🔥 START ANIMATION
-      btn.classList.add("loading");
+      btn.classList.add("loading"); // 🔥 start animation
 
       document.getElementById("searchInput").value = "";
-      document.getElementById("yearFilter").value = "";
-      document.getElementById("arnFilter").value = "";
+      document.getElementById("g1Filter").value = "";
+      document.getElementById("f3bFilter").value = "";
+      startRange.value = 0;
+      endRange.value = 12;
 
+      updateLabel();
       await loadRows();
 
-      // 🔥 STOP ANIMATION
       setTimeout(() => {
-        btn.classList.remove("loading");
+        btn.classList.remove("loading"); // 🔥 stop animation
       }, 600);
     };
 
+    updateLabel();
     loadRows();
   })();
 </script>

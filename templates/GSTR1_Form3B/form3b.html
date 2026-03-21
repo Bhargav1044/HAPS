@@ -1,6 +1,6 @@
 <div class="form-wrapper">
   <div class="form-container">
-    <form id="arnForm">
+    <form id="form3bForm">
       <div class="form-grid">
         <!-- GST NO -->
         <div class="form-group">
@@ -26,13 +26,12 @@
           </div>
         </div>
 
-        <!-- ARN STATUS -->
-        <!-- ARN -->
+        <!-- FORM 3B ARN -->
         <div class="form-group">
-          <label>GSTR1 ARN</label>
+          <label>Form 3B ARN</label>
 
           <!-- DROPDOWN -->
-          <div class="input-box dropdown" id="arnDropdownBox">
+          <div class="input-box dropdown">
             <i class="fas fa-list"></i>
             <select id="arnSelect" required>
               <option disabled selected>Select ARN Status</option>
@@ -44,7 +43,7 @@
             </select>
           </div>
 
-          <!-- MANUAL INPUT (HIDDEN INITIALLY) -->
+          <!-- MANUAL INPUT -->
           <div
             class="input-box"
             id="manualArnBox"
@@ -57,16 +56,17 @@
 
         <!-- DATE -->
         <div class="form-group">
-          <label>Filing Date</label>
+          <label>Form 3B Filing Date</label>
           <div class="input-box">
             <i class="fas fa-calendar-day"></i>
-            <input type="date" required />
+            <input id="filingDate" type="date" required />
           </div>
         </div>
       </div>
 
-      <button class="form-btn">Update</button>
+      <button class="form-btn" type="submit">Update</button>
     </form>
+    <p id="form3bMessage" style="margin-top: 10px; font-weight: 600"></p>
   </div>
 </div>
 
@@ -141,14 +141,14 @@
     color: #111;
   }
 
-  /* SELECT STYLE */
+  /* SELECT */
   .input-box select {
     appearance: none;
     cursor: pointer;
     min-height: 36px;
   }
 
-  /* DROPDOWN ARROW ONLY */
+  /* DROPDOWN ARROW */
   .input-box.dropdown::after {
     content: "▼";
     position: absolute;
@@ -159,7 +159,6 @@
     transition: 0.2s;
   }
 
-  /* ROTATE */
   .input-box.dropdown:focus-within::after {
     transform: rotate(180deg);
   }
@@ -220,6 +219,7 @@
       monthList.innerHTML += `<option value="${m}">${m}</option>`;
     });
 
+    // ARN manual logic
     const arnSelect = document.getElementById("arnSelect");
     const manualBox = document.getElementById("manualArnBox");
     const manualInput = document.getElementById("manualArn");
@@ -228,6 +228,7 @@
       if (arnSelect.value === "manual") {
         manualBox.style.display = "flex";
         manualInput.required = true;
+        manualInput.focus();
       } else {
         manualBox.style.display = "none";
         manualInput.required = false;
@@ -235,14 +236,44 @@
       }
     });
 
-    // validation
-    document.getElementById("arnForm").addEventListener("submit", function (e) {
-      const gst = document.getElementById("gst").value;
-
-      if (!/^[0-9A-Z]{15}$/.test(gst)) {
-        alert("GST must be 15 uppercase alphanumeric");
+    // validation + submit
+    document
+      .getElementById("form3bForm")
+      .addEventListener("submit", async function (e) {
         e.preventDefault();
-      }
-    });
+        const gst = document.getElementById("gst").value.trim().toUpperCase();
+        const message = document.getElementById("form3bMessage");
+
+        if (!/^[0-9A-Z]{15}$/.test(gst)) {
+          alert("GST must be 15 uppercase alphanumeric");
+          return;
+        }
+
+        const selectedArn = arnSelect.value;
+        const arnValue =
+          selectedArn === "manual" ? manualInput.value.trim() : selectedArn;
+
+        const response = await fetch("/api/gstr1/update-form3b", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            gst_no: gst,
+            month: monthList.value,
+            arn: arnValue,
+            date: document.getElementById("filingDate").value,
+          }),
+        });
+
+        const result = await response.json();
+        if (response.ok && result.success) {
+          if (message) {
+            message.textContent = "Updated successfully";
+            message.style.color = "#166534";
+          }
+        } else if (message) {
+          message.textContent = result.error || "Update failed";
+          message.style.color = "#b91c1c";
+        }
+      });
   })();
 </script>

@@ -16,7 +16,7 @@
           <label>Name</label>
           <div class="input-box">
             <i class="fas fa-user"></i>
-            <input type="text" required />
+            <input id="name" type="text" required />
           </div>
         </div>
 
@@ -34,7 +34,7 @@
           <label>ID</label>
           <div class="input-box">
             <i class="fas fa-hashtag"></i>
-            <input type="number" required />
+            <input id="userId" type="text" required />
           </div>
         </div>
 
@@ -43,7 +43,7 @@
           <label>Password</label>
           <div class="input-box">
             <i class="fas fa-lock"></i>
-            <input type="password" required />
+            <input id="password" type="text" required />
           </div>
         </div>
 
@@ -52,7 +52,7 @@
           <label>Concern Person</label>
           <div class="input-box">
             <i class="fas fa-user-tie"></i>
-            <input required />
+            <input id="concernPerson" required />
           </div>
         </div>
 
@@ -61,7 +61,7 @@
           <label>Contact No</label>
           <div class="input-box">
             <i class="fas fa-phone"></i>
-            <input maxlength="10" pattern="[0-9]{10}" required />
+            <input id="contactNo" maxlength="10" pattern="[0-9]{10}" required />
           </div>
         </div>
 
@@ -70,7 +70,7 @@
           <label>Email</label>
           <div class="input-box">
             <i class="fas fa-envelope"></i>
-            <input type="email" required />
+            <input id="emailId" type="email" required />
           </div>
         </div>
 
@@ -84,8 +84,9 @@
         </div>
       </div>
 
-      <button class="form-btn">Update</button>
+      <button class="form-btn" type="submit">Update</button>
     </form>
+    <p id="searchMessage" style="margin-top: 10px; font-weight: 600"></p>
   </div>
 </div>
 
@@ -202,7 +203,6 @@
     }
   }
 </style>
-
 <script>
   (function () {
     const months = [
@@ -222,13 +222,18 @@
     ];
 
     const monthList = document.getElementById("monthList");
+    const form = document.getElementById("updateForm");
+    const message = document.getElementById("searchMessage");
 
+    if (!form) return;
+
+    /* ✅ FIXED OPTION RENDERING */
     monthList.innerHTML = `<option disabled selected>Select Month</option>`;
     months.forEach((m) => {
-      monthList.innerHTML += `<option>${m}</option>`;
+      monthList.innerHTML += `<option value="${m}">${m}</option>`;
     });
 
-    /* 🔍 GST SEARCH → REDIRECT */
+    /* 🔍 GST SEARCH → REDIRECT (basic) */
     window.openGST = function () {
       const gst = document.getElementById("gstSearch").value;
 
@@ -237,23 +242,103 @@
         return;
       }
 
-      // autofill in form
       document.getElementById("gst").value = gst.toUpperCase();
-
-      // open portal
       window.open("https://services.gst.gov.in/services/login", "_blank");
     };
 
-    /* VALIDATION */
+    /* ✅ FORM SUBMIT */
     document
       .getElementById("updateForm")
-      .addEventListener("submit", function (e) {
-        const gst = document.getElementById("gst").value;
+      .addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const gst = document.getElementById("gst").value.trim().toUpperCase();
 
         if (!/^[0-9A-Z]{15}$/.test(gst)) {
           alert("GST must be 15 uppercase alphanumeric");
-          e.preventDefault();
+          return;
+        }
+
+        /* ✅ EMAIL FIX */
+        let emailInput = document.getElementById("emailId");
+        let email = emailInput.value.trim().toLowerCase();
+
+        if (!email.endsWith("@gmail.com")) {
+          alert("Email must be a valid @gmail.com address");
+          return;
+        }
+
+        emailInput.value = email;
+
+        const response = await fetch("/api/gstr1/update-profile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: document.getElementById("name").value.trim(),
+            gst_no: gst,
+            user_id: document.getElementById("userId").value.trim(),
+            password: document.getElementById("password").value.trim(),
+            concern_person: document
+              .getElementById("concernPerson")
+              .value.trim(),
+            contact_no: document.getElementById("contactNo").value.trim(),
+            email_id: email,
+            periodicity: "Monthly",
+            month: monthList.value,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          if (message) {
+            message.textContent = "Updated successfully";
+            message.style.color = "#166534";
+          }
+        } else if (message) {
+          message.textContent = result.error || "Update failed";
+          message.style.color = "#b91c1c";
         }
       });
+
+    /* 🔥 UPDATED GST SEARCH (AUTO FILL ONLY) */
+    window.openGST = async function () {
+      const gst = document
+        .getElementById("gstSearch")
+        .value.trim()
+        .toUpperCase();
+
+      if (!/^[0-9A-Z]{15}$/.test(gst)) {
+        alert("Enter valid GST number");
+        return;
+      }
+
+      const response = await fetch(
+        `/api/gstr1/by-gst?gst_no=${encodeURIComponent(gst)}`,
+      );
+
+      const result = await response.json();
+      const row = result.data && result.data[0];
+
+      if (!response.ok || !result.success || !row) {
+        alert("No record found for this GST");
+        return;
+      }
+
+      /* ✅ AUTO FILL */
+      document.getElementById("gst").value = row.gst_no || "";
+      document.getElementById("name").value = row.name || "";
+      document.getElementById("userId").value = row.user_id || "";
+      document.getElementById("password").value = row.password || "";
+      document.getElementById("concernPerson").value = row.concern_person || "";
+      document.getElementById("contactNo").value = row.contact_no || "";
+      document.getElementById("emailId").value = (
+        row.email_id || ""
+      ).toLowerCase();
+
+      if (row.month) {
+        monthList.value = row.month;
+      }
+    };
   })();
 </script>

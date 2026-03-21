@@ -5,22 +5,26 @@
 
     <div class="header-actions">
       <input type="text" id="searchInput" placeholder="Search..." />
-      <button onclick="resetFilters()">
+      <button id="refreshBtn" onclick="resetFilters()">
         <i class="fas fa-rotate"></i>
       </button>
     </div>
   </div>
 
-  <!-- FILTERS -->
-  <div class="filter-box">
-    <!-- GST FILTER -->
-    <div class="gst-filter">
-      <button class="filter-btn active" data-value="">All</button>
-      <button class="filter-btn" data-value="empty">GST Empty</button>
+  <!-- FILTER BAR (SINGLE LINE UI) -->
+  <div class="filter-bar">
+    <!-- ARN FILTER -->
+    <div class="filter-group">
+      <label>CMP-08 Status</label>
+      <select id="arnFilter">
+        <option value="">All</option>
+        <option value="filled">Filled</option>
+        <option value="empty">Empty</option>
+      </select>
     </div>
 
     <!-- QUARTER FILTER -->
-    <div class="range-box">
+    <div class="filter-group">
       <label>Quarter</label>
       <select id="quarterFilter">
         <option value="">All</option>
@@ -60,7 +64,6 @@
   </div>
 </div>
 
-<!-- ================= STYLE ================= -->
 <style>
   .form-wrapper {
     padding: 15px;
@@ -69,12 +72,7 @@
   .table-header {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 18px;
-  }
-
-  .table-header h2 {
-    font-size: 20px;
-    font-weight: 700;
+    margin-bottom: 15px;
   }
 
   .header-actions {
@@ -86,7 +84,7 @@
     padding: 10px;
     border-radius: 10px;
     border: 1px solid #cbd5e1;
-    width: 240px;
+    width: 220px;
   }
 
   .header-actions button {
@@ -95,46 +93,55 @@
     border-radius: 10px;
     border: none;
     padding: 10px;
-  }
-
-  .filter-box {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-  }
-
-  .gst-filter {
-    display: flex;
-    gap: 10px;
-  }
-
-  .filter-btn {
-    padding: 8px 14px;
-    border-radius: 20px;
-    border: 1px solid #cbd5e1;
-    background: white;
     cursor: pointer;
   }
 
-  .filter-btn.active {
-    background: #27334d;
-    color: white;
-    border: none;
+  /* 🔥 NEW ANIMATION */
+  #refreshBtn i {
+    transition: transform 0.5s ease;
   }
 
-  .range-box {
+  #refreshBtn.loading i {
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* FILTER BAR */
+  .filter-bar {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+
+  .filter-group {
     display: flex;
     flex-direction: column;
+    font-size: 13px;
+  }
+
+  .filter-group select {
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    min-width: 160px;
   }
 
   .table-container {
     background: rgba(255, 255, 255, 0.12);
     backdrop-filter: blur(14px);
     border-radius: 16px;
-
     max-height: 420px;
-    overflow-y: auto;
-    overflow-x: auto;
+    overflow: auto;
   }
 
   table {
@@ -145,7 +152,7 @@
   th {
     position: sticky;
     top: 0;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.95);
     color: #27334d;
     font-weight: 700;
     padding: 12px;
@@ -162,48 +169,42 @@
   .loading {
     text-align: center;
   }
+
+  .null {
+    color: white;
+    background: #e11d48;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+  }
 </style>
 
-<!-- ================= SCRIPT ================= -->
 <script>
   (function () {
-    let data = [
-      {
-        name: "ABC Pvt Ltd",
-        gst: "22AAAAA0000A1Z5",
-        id: "101",
-        password: "******",
-        concern: "John",
-        contact: "9876543210",
-        email: "abc@email.com",
-        periodicity: "Quarterly",
-        quarter: "Apr - Jun 2026",
-        arn: "Filed",
-        date: "2026-07-10",
-      },
-    ];
+    let data = [];
 
-    let gstFilterValue = "";
-
-    /* GST FILTER */
-    document.querySelectorAll(".filter-btn").forEach((btn) => {
-      btn.onclick = () => {
-        document
-          .querySelectorAll(".filter-btn")
-          .forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
-        gstFilterValue = btn.dataset.value;
-        applyFilters();
-      };
-    });
+    function formatEmail(email) {
+      if (!email) return "";
+      email = email.toLowerCase().trim();
+      if (!email.endsWith("@gmail.com")) {
+        email = email.split("@")[0] + "@gmail.com";
+      }
+      return email;
+    }
 
     function applyFilters() {
       let filtered = [...data];
+
       const search = document.getElementById("searchInput").value.toLowerCase();
       const quarter = document.getElementById("quarterFilter").value;
+      const arnFilter = document.getElementById("arnFilter").value;
 
-      if (gstFilterValue === "empty") {
-        filtered = filtered.filter((d) => !d.gst);
+      if (arnFilter === "empty") {
+        filtered = filtered.filter((d) => !d.arn || !d.date);
+      }
+
+      if (arnFilter === "filled") {
+        filtered = filtered.filter((d) => d.arn && d.date);
       }
 
       if (quarter) {
@@ -240,13 +241,58 @@
         <td>${r.email}</td>
         <td>${r.periodicity}</td>
         <td>${r.quarter}</td>
-        <td>${r.arn}</td>
-        <td>${r.date}</td>
+        <td>${r.arn ? r.arn : '<span class="null">NULL</span>'}</td>
+        <td>${r.date ? r.date : '<span class="null">NULL</span>'}</td>
+        ${
+          window.isAdmin
+            ? `<td><button style="background:#e11d48;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;font-size:12px;" onclick="deleteRecord('${r.db_id}','cmp')">Delete</button></td>`
+            : ""
+        }
       </tr>
     `,
         )
         .join("");
     }
+
+    async function loadRows() {
+      const response = await fetch("/api/cmp/list");
+      const result = await response.json();
+
+      data = (result.data || []).map((row) => ({
+        db_id: row.id,
+        name: row.name || "-",
+        gst: row.gst_no || "",
+        id: row.user_id || "-",
+        password: row.password || "-",
+        concern: row.concern_person || "-",
+        contact: row.contact_no || "-",
+        email: formatEmail(row.email_id),
+        periodicity: row.periodicity || "-",
+        quarter: row.quarter || "-",
+        arn: row.cmp08_arn_no || "",
+        date: row.cmp08_filing_date || "",
+      }));
+
+      renderTable(data);
+    }
+
+    window.resetFilters = async function () {
+      const btn = document.getElementById("refreshBtn");
+
+      // 🔥 START ANIMATION
+      btn.classList.add("loading");
+
+      document.getElementById("searchInput").value = "";
+      document.getElementById("quarterFilter").value = "";
+      document.getElementById("arnFilter").value = "";
+
+      await loadRows();
+
+      // 🔥 STOP ANIMATION
+      setTimeout(() => {
+        btn.classList.remove("loading");
+      }, 600);
+    };
 
     document
       .getElementById("searchInput")
@@ -254,22 +300,10 @@
     document
       .getElementById("quarterFilter")
       .addEventListener("change", applyFilters);
+    document
+      .getElementById("arnFilter")
+      .addEventListener("change", applyFilters);
 
-    window.resetFilters = function () {
-      gstFilterValue = "";
-      document
-        .querySelectorAll(".filter-btn")
-        .forEach((b) => b.classList.remove("active"));
-      document
-        .querySelector(".filter-btn[data-value='']")
-        .classList.add("active");
-
-      document.getElementById("searchInput").value = "";
-      document.getElementById("quarterFilter").value = "";
-
-      renderTable(data);
-    };
-
-    renderTable(data);
+    loadRows();
   })();
 </script>

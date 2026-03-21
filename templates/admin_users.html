@@ -1,0 +1,128 @@
+<main class="admin-main">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">User Management</h1>
+      <p class="page-subtitle">Manage user accounts and access requests</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-icon" onclick="loadAdminPanel()" title="Refresh">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <polyline points="23 4 23 10 17 10" />
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+        </svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="stats-grid">
+    <div class="stat-card stat-blue">
+      <div class="stat-icon">
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      </div>
+      <div class="stat-info">
+        <h3 id="approvedCount">—</h3>
+        <p>Approved Users</p>
+      </div>
+    </div>
+
+    <div class="stat-card stat-amber">
+      <div class="stat-icon">
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+      </div>
+      <div class="stat-info">
+        <h3 id="pendingCount">—</h3>
+        <p>Pending Requests</p>
+      </div>
+    </div>
+
+    <div class="stat-card stat-red">
+      <div class="stat-icon">
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+        </svg>
+      </div>
+      <div class="stat-info">
+        <h3 id="blockedCount">—</h3>
+        <p>Blocked Users</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sections Grid -->
+  <div class="sections-grid">
+    <!-- Pending Requests -->
+    <section class="dashboard-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <span class="section-dot dot-amber"></span>
+          Pending Requests
+        </h2>
+        <span class="section-count" id="pendingBadge">0</span>
+      </div>
+      <div id="pendingList" class="user-list">
+        <div class="loading-state">...</div>
+      </div>
+    </section>
+
+    <!-- Approved Users -->
+    <section class="dashboard-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <span class="section-dot dot-green"></span>
+          Approved Users
+        </h2>
+        <span class="section-count" id="approvedBadge">0</span>
+      </div>
+      <div id="approvedList" class="user-list">
+        <div class="loading-state">...</div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+  if (typeof loadAdminPanel === "function") {
+    loadAdminPanel();
+  }
+</script>

@@ -1,8 +1,7 @@
 <div class="form-wrapper">
   <div class="form-container">
-    <form id="gstr9Form">
+    <form id="gstr4Form">
       <div class="form-grid">
-        <!-- GST -->
         <div class="form-group">
           <label>GST No</label>
           <div class="input-box">
@@ -11,16 +10,11 @@
           </div>
         </div>
 
-        <!-- EMPTY -->
-        <div></div>
-
-        <!-- GSTR4 ARN -->
         <div class="form-group">
-          <label>GSTR9 ARN</label>
-
+          <label>GSTR4 ARN</label>
           <div class="input-box dropdown">
             <i class="fas fa-list"></i>
-            <select id="g9Select" required>
+            <select id="arnSelect" required>
               <option disabled selected>Select ARN Status</option>
               <option>Filed by Client</option>
               <option>Client Exited</option>
@@ -29,53 +23,45 @@
               <option value="manual">Enter Manually</option>
             </select>
           </div>
-
           <div
             class="input-box"
-            id="g9ManualBox"
+            id="manualArnBox"
             style="display: none; margin-top: 8px"
           >
             <i class="fas fa-keyboard"></i>
-            <input placeholder="Enter ARN Number" id="g9Manual" />
+            <input id="manualArn" placeholder="Enter ARN Number" />
           </div>
         </div>
 
-        <!-- GSTR4 DATE -->
         <div class="form-group">
           <label>Filing Date</label>
           <div class="input-box">
             <i class="fas fa-calendar-day"></i>
-            <input type="date" required />
+            <input id="filingDate" type="date" required />
           </div>
         </div>
+      </div>
 
-      <button class="form-btn">Update</button>
+      <button class="form-btn" type="submit">Update</button>
     </form>
+    <p id="gstr4Message" style="margin-top: 10px; font-weight: 600"></p>
   </div>
 </div>
 
-<!-- ================= STYLE ================= -->
 <style>
   .form-wrapper {
-    height: calc(100vh - 80px);
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    margin-top: 20px;
+    padding: 20px;
   }
 
   .form-container {
     width: 100%;
     max-width: 800px;
-
+    margin: auto;
     padding: 25px;
     border-radius: 14px;
-
     background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(14px);
-
     border: 1px solid rgba(255, 255, 255, 0.25);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   }
 
   .form-grid {
@@ -94,10 +80,8 @@
     position: relative;
     display: flex;
     align-items: center;
-
     border-radius: 8px;
     padding-left: 35px;
-
     background: rgba(255, 255, 255, 0.15);
     border: 1px solid rgba(255, 255, 255, 0.35);
   }
@@ -122,7 +106,6 @@
   .input-box select {
     appearance: none;
     cursor: pointer;
-    min-height: 36px;
   }
 
   .input-box.dropdown::after {
@@ -131,11 +114,6 @@
     right: 10px;
     font-size: 10px;
     color: #6b7280;
-  }
-
-  .input-box:focus-within {
-    border-color: #2563eb;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
   }
 
   .form-btn {
@@ -156,36 +134,52 @@
   }
 </style>
 
-<!-- ================= SCRIPT ================= -->
 <script>
   (function () {
-    const g9Select = document.getElementById("g9Select");
-    const g9ManualBox = document.getElementById("g9ManualBox");
-    const g9Manual = document.getElementById("g9Manual");
+    const arnSelect = document.getElementById("arnSelect");
+    const manualArnBox = document.getElementById("manualArnBox");
+    const manualArn = document.getElementById("manualArn");
+    const form = document.getElementById("gstr4Form");
+    const message = document.getElementById("gstr4Message");
 
-    const g9cSelect = document.getElementById("g9cSelect");
-    const g9cManualBox = document.getElementById("g9cManualBox");
-    const g9cManual = document.getElementById("g9cManual");
-
-    g9Select?.addEventListener("change", () => {
-      if (g9Select.value === "manual") {
-        g9ManualBox.style.display = "flex";
-        g9Manual.required = true;
+    arnSelect.addEventListener("change", () => {
+      if (arnSelect.value === "manual") {
+        manualArnBox.style.display = "flex";
+        manualArn.required = true;
       } else {
-        g9ManualBox.style.display = "none";
-        g9Manual.required = false;
-        g9Manual.value = "";
+        manualArnBox.style.display = "none";
+        manualArn.required = false;
+        manualArn.value = "";
       }
     });
 
-    g9cSelect?.addEventListener("change", () => {
-      if (g9cSelect.value === "manual") {
-        g9cManualBox.style.display = "flex";
-        g9cManual.required = true;
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const gst = document.getElementById("gst").value.trim().toUpperCase();
+      if (!/^[0-9A-Z]{15}$/.test(gst)) {
+        alert("GST must be 15 uppercase alphanumeric");
+        return;
+      }
+
+      const arnValue =
+        arnSelect.value === "manual" ? manualArn.value.trim() : arnSelect.value;
+      const response = await fetch("/api/gstr4/update-arn", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gst_no: gst,
+          arn: arnValue,
+          date: document.getElementById("filingDate").value,
+        }),
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        message.textContent = "Updated successfully";
+        message.style.color = "#166534";
       } else {
-        g9cManualBox.style.display = "none";
-        g9cManual.required = false;
-        g9cManual.value = "";
+        message.textContent = result.error || "Update failed";
+        message.style.color = "#b91c1c";
       }
     });
   })();

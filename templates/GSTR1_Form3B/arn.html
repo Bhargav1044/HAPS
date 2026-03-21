@@ -1,6 +1,6 @@
 <div class="form-wrapper">
   <div class="form-container">
-    <form id="form3bForm">
+    <form id="arnForm">
       <div class="form-grid">
         <!-- GST NO -->
         <div class="form-group">
@@ -26,12 +26,13 @@
           </div>
         </div>
 
-        <!-- FORM 3B ARN -->
+        <!-- ARN STATUS -->
+        <!-- ARN -->
         <div class="form-group">
-          <label>Form 3B ARN</label>
+          <label>GSTR1 ARN</label>
 
           <!-- DROPDOWN -->
-          <div class="input-box dropdown">
+          <div class="input-box dropdown" id="arnDropdownBox">
             <i class="fas fa-list"></i>
             <select id="arnSelect" required>
               <option disabled selected>Select ARN Status</option>
@@ -43,7 +44,7 @@
             </select>
           </div>
 
-          <!-- MANUAL INPUT -->
+          <!-- MANUAL INPUT (HIDDEN INITIALLY) -->
           <div
             class="input-box"
             id="manualArnBox"
@@ -56,16 +57,17 @@
 
         <!-- DATE -->
         <div class="form-group">
-          <label>Form 3B Filing Date</label>
+          <label>Filing Date</label>
           <div class="input-box">
             <i class="fas fa-calendar-day"></i>
-            <input type="date" required />
+            <input id="filingDate" type="date" required />
           </div>
         </div>
       </div>
 
-      <button class="form-btn">Update</button>
+      <button class="form-btn" type="submit">Update</button>
     </form>
+    <p id="arnMessage" style="margin-top: 10px; font-weight: 600"></p>
   </div>
 </div>
 
@@ -140,14 +142,14 @@
     color: #111;
   }
 
-  /* SELECT */
+  /* SELECT STYLE */
   .input-box select {
     appearance: none;
     cursor: pointer;
     min-height: 36px;
   }
 
-  /* DROPDOWN ARROW */
+  /* DROPDOWN ARROW ONLY */
   .input-box.dropdown::after {
     content: "▼";
     position: absolute;
@@ -158,6 +160,7 @@
     transition: 0.2s;
   }
 
+  /* ROTATE */
   .input-box.dropdown:focus-within::after {
     transform: rotate(180deg);
   }
@@ -218,7 +221,6 @@
       monthList.innerHTML += `<option value="${m}">${m}</option>`;
     });
 
-    // ARN manual logic
     const arnSelect = document.getElementById("arnSelect");
     const manualBox = document.getElementById("manualArnBox");
     const manualInput = document.getElementById("manualArn");
@@ -227,7 +229,6 @@
       if (arnSelect.value === "manual") {
         manualBox.style.display = "flex";
         manualInput.required = true;
-        manualInput.focus();
       } else {
         manualBox.style.display = "none";
         manualInput.required = false;
@@ -235,15 +236,43 @@
       }
     });
 
-    // validation
+    // validation + submit
     document
-      .getElementById("form3bForm")
-      .addEventListener("submit", function (e) {
-        const gst = document.getElementById("gst").value;
+      .getElementById("arnForm")
+      .addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const gst = document.getElementById("gst").value.trim().toUpperCase();
+        const message = document.getElementById("arnMessage");
 
         if (!/^[0-9A-Z]{15}$/.test(gst)) {
           alert("GST must be 15 uppercase alphanumeric");
-          e.preventDefault();
+          return;
+        }
+
+        const selectedArn = arnSelect.value;
+        const arnValue =
+          selectedArn === "manual" ? manualInput.value.trim() : selectedArn;
+
+        const response = await fetch("/api/gstr1/update-arn", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            gst_no: gst,
+            month: monthList.value,
+            arn: arnValue,
+            date: document.getElementById("filingDate").value,
+          }),
+        });
+
+        const result = await response.json();
+        if (response.ok && result.success) {
+          if (message) {
+            message.textContent = "Updated successfully";
+            message.style.color = "#166534";
+          }
+        } else if (message) {
+          message.textContent = result.error || "Update failed";
+          message.style.color = "#b91c1c";
         }
       });
   })();

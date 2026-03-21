@@ -7,7 +7,7 @@
           <label>Name</label>
           <div class="input-box">
             <i class="fas fa-user"></i>
-            <input type="text" required />
+            <input id="name" type="text" required />
           </div>
         </div>
 
@@ -16,7 +16,7 @@
           <label>GST No</label>
           <div class="input-box">
             <i class="fas fa-id-card"></i>
-            <input maxlength="15" required pattern="[0-9A-Z]{15}" />
+            <input id="gst" maxlength="15" required pattern="[0-9A-Z]{15}" />
           </div>
         </div>
 
@@ -25,7 +25,7 @@
           <label>ID</label>
           <div class="input-box">
             <i class="fas fa-hashtag"></i>
-            <input type="number" required />
+            <input id="userId" type="text" required />
           </div>
         </div>
 
@@ -34,7 +34,7 @@
           <label>Password</label>
           <div class="input-box">
             <i class="fas fa-lock"></i>
-            <input type="password" required />
+            <input id="password" type="text" required />
           </div>
         </div>
 
@@ -43,7 +43,7 @@
           <label>Concern Person</label>
           <div class="input-box">
             <i class="fas fa-user-tie"></i>
-            <input required />
+            <input id="concernPerson" required />
           </div>
         </div>
 
@@ -52,7 +52,7 @@
           <label>Contact No</label>
           <div class="input-box">
             <i class="fas fa-phone"></i>
-            <input maxlength="10" required pattern="[0-9]{10}" />
+            <input id="contactNo" maxlength="10" required pattern="[0-9]{10}" />
           </div>
         </div>
 
@@ -61,7 +61,7 @@
           <label>Email</label>
           <div class="input-box">
             <i class="fas fa-envelope"></i>
-            <input type="email" required />
+            <input id="emailId" type="email" required />
           </div>
         </div>
 
@@ -70,7 +70,7 @@
           <label>Periodicity</label>
           <div class="input-box dropdown">
             <i class="fas fa-calendar"></i>
-            <select required>
+            <select id="periodicity" required>
               <option value="Quarterly" selected>Quarterly</option>
             </select>
           </div>
@@ -95,8 +95,9 @@
         </div>
       </div>
 
-      <button class="form-btn">Submit</button>
+      <button class="form-btn" type="submit">Submit</button>
     </form>
+    <p id="cmpAddMessage" style="margin-top: 10px; font-weight: 600"></p>
   </div>
 </div>
 
@@ -176,6 +177,8 @@
 
     const start = document.getElementById("startQuarter");
     const end = document.getElementById("endQuarter");
+    const form = document.getElementById("cmpForm");
+    const message = document.getElementById("cmpAddMessage");
 
     // fill dropdowns
     start.innerHTML = `<option disabled selected>Select Quarter</option>`;
@@ -186,17 +189,73 @@
       end.innerHTML += `<option value="${q}">${q}</option>`;
     });
 
-    // prevent same selection
+    // keep end quarter within selected range
     start.addEventListener("change", () => {
-      const selected = start.value;
+      const startIndex = quarters.indexOf(start.value);
 
       end.innerHTML = `<option disabled selected>Select Quarter</option>`;
 
-      quarters.forEach((q) => {
-        if (q !== selected) {
+      quarters.forEach((q, i) => {
+        if (i >= startIndex) {
           end.innerHTML += `<option value="${q}">${q}</option>`;
         }
       });
+    });
+
+    function getQuartersInRange(startQuarter, endQuarter) {
+      const startIndex = quarters.indexOf(startQuarter);
+      const endIndex = quarters.indexOf(endQuarter);
+      if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
+        return [];
+      }
+      return quarters.slice(startIndex, endIndex + 1);
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const payload = {
+        name: document.getElementById("name").value.trim(),
+        gst_no: document
+          .querySelector("#cmpForm #gst")
+          .value.trim()
+          .toUpperCase(),
+        user_id: document.getElementById("userId").value.trim(),
+        password: document.getElementById("password").value.trim(),
+        concern_person: document.getElementById("concernPerson").value.trim(),
+        contact_no: document.getElementById("contactNo").value.trim(),
+        email_id: document.getElementById("emailId").value.trim(),
+        periodicity: document.getElementById("periodicity").value,
+        quarters: getQuartersInRange(start.value, end.value),
+      };
+
+      if (payload.quarters.length === 0) {
+        alert("Select a valid quarter range");
+        return;
+      }
+
+      if (!/^[0-9A-Z]{15}$/.test(payload.gst_no)) {
+        alert("GST must be 15 uppercase alphanumeric");
+        return;
+      }
+
+      const response = await fetch("/api/cmp/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+      if (response.ok && result.success) {
+        if (message) {
+          message.textContent = `Saved ${payload.quarters.length} quarter entries successfully`;
+          message.style.color = "#166534";
+        }
+        form.reset();
+      } else if (message) {
+        message.textContent = result.error || "Save failed";
+        message.style.color = "#b91c1c";
+      }
     });
   })();
 </script>
