@@ -283,13 +283,19 @@
           </div>
 
           <div class="link-text">
-            <a onclick="showScreen('firstLogin')">Logout</a>
+            <a onclick="logoutIndex()">Logout</a>
           </div>
         </div>
       </div>
     </div>
     <script>
       let currentUser = null;
+
+      function logoutIndex() {
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.replace('/login');
+      }
 
       /* ================= UI ================= */
 

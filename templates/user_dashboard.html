@@ -200,8 +200,9 @@
       }
 
       document.getElementById("logoutBtn")?.addEventListener("click", () => {
-        localStorage.removeItem("username");
-        window.location.href = "/login";
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.replace("/login");
       });
 
       loadDashboardCounts();

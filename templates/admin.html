@@ -219,9 +219,9 @@
       }
 
       document.getElementById("logoutBtn")?.addEventListener("click", () => {
-        localStorage.removeItem("username");
-        // Also clear any admin session flags if used and redirect
-        window.location.href = "/login";
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.replace("/login");
       });
 
       // Initially load the user management view
