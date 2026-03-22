@@ -237,43 +237,6 @@
     });
 
     // validation + submit
-<<<<<<< HEAD
-    document.getElementById("arnForm").addEventListener("submit", async function (e) {
-      e.preventDefault();
-      const gst = document.getElementById("gst").value.trim().toUpperCase();
-      const message = document.getElementById("arnMessage");
-
-      if (!/^[0-9A-Z]{15}$/.test(gst)) {
-        alert("GST must be 15 uppercase alphanumeric");
-        return;
-      }
-
-      const selectedArn = arnSelect.value;
-      const arnValue = selectedArn === "manual" ? manualInput.value.trim() : selectedArn;
-
-      const response = await fetch("/api/gstr1/update-arn", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          gst_no: gst,
-          month: monthList.value,
-          arn: arnValue,
-          date: document.getElementById("filingDate").value,
-        }),
-      });
-
-      const result = await response.json();
-      if (response.ok && result.success) {
-        if (message) {
-          message.textContent = "Updated successfully";
-          message.style.color = "#166534";
-        }
-      } else if (message) {
-        message.textContent = result.error || "Update failed";
-        message.style.color = "#b91c1c";
-      }
-    });
-=======
     document
       .getElementById("arnForm")
       .addEventListener("submit", async function (e) {
@@ -312,6 +275,5 @@
           message.style.color = "#b91c1c";
         }
       });
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
   })();
 </script>

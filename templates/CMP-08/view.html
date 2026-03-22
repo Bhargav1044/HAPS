@@ -5,28 +5,12 @@
 
     <div class="header-actions">
       <input type="text" id="searchInput" placeholder="Search..." />
-<<<<<<< HEAD
-      <button onclick="resetFilters()">
-=======
       <button id="refreshBtn" onclick="resetFilters()">
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
         <i class="fas fa-rotate"></i>
       </button>
     </div>
   </div>
 
-<<<<<<< HEAD
-  <!-- FILTERS -->
-  <div class="filter-box">
-    <!-- GST FILTER -->
-    <div class="gst-filter">
-      <button class="filter-btn active" data-value="">All</button>
-      <button class="filter-btn" data-value="empty">GST Empty</button>
-    </div>
-
-    <!-- QUARTER FILTER -->
-    <div class="range-box">
-=======
   <!-- FILTER BAR (SINGLE LINE UI) -->
   <div class="filter-bar">
     <!-- ARN FILTER -->
@@ -41,7 +25,6 @@
 
     <!-- QUARTER FILTER -->
     <div class="filter-group">
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
       <label>Quarter</label>
       <select id="quarterFilter">
         <option value="">All</option>
@@ -81,10 +64,6 @@
   </div>
 </div>
 
-<<<<<<< HEAD
-<!-- ================= STYLE ================= -->
-=======
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
 <style>
   .form-wrapper {
     padding: 15px;
@@ -93,16 +72,7 @@
   .table-header {
     display: flex;
     justify-content: space-between;
-<<<<<<< HEAD
-    margin-bottom: 18px;
-  }
-
-  .table-header h2 {
-    font-size: 20px;
-    font-weight: 700;
-=======
     margin-bottom: 15px;
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
   }
 
   .header-actions {
@@ -114,11 +84,7 @@
     padding: 10px;
     border-radius: 10px;
     border: 1px solid #cbd5e1;
-<<<<<<< HEAD
-    width: 240px;
-=======
     width: 220px;
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
   }
 
   .header-actions button {
@@ -127,38 +93,6 @@
     border-radius: 10px;
     border: none;
     padding: 10px;
-<<<<<<< HEAD
-  }
-
-  .filter-box {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-  }
-
-  .gst-filter {
-    display: flex;
-    gap: 10px;
-  }
-
-  .filter-btn {
-    padding: 8px 14px;
-    border-radius: 20px;
-    border: 1px solid #cbd5e1;
-    background: white;
-    cursor: pointer;
-  }
-
-  .filter-btn.active {
-    background: #27334d;
-    color: white;
-    border: none;
-  }
-
-  .range-box {
-    display: flex;
-    flex-direction: column;
-=======
     cursor: pointer;
   }
 
@@ -200,22 +134,14 @@
     border-radius: 8px;
     border: 1px solid #cbd5e1;
     min-width: 160px;
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
   }
 
   .table-container {
     background: rgba(255, 255, 255, 0.12);
     backdrop-filter: blur(14px);
     border-radius: 16px;
-<<<<<<< HEAD
-
-    max-height: 420px;
-    overflow-y: auto;
-    overflow-x: auto;
-=======
     max-height: 420px;
     overflow: auto;
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
   }
 
   table {
@@ -226,11 +152,7 @@
   th {
     position: sticky;
     top: 0;
-<<<<<<< HEAD
-    background: rgba(255, 255, 255, 0.9);
-=======
     background: rgba(255, 255, 255, 0.95);
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
     color: #27334d;
     font-weight: 700;
     padding: 12px;
@@ -247,11 +169,6 @@
   .loading {
     text-align: center;
   }
-<<<<<<< HEAD
-</style>
-
-<!-- ================= SCRIPT ================= -->
-=======
 
   .null {
     color: white;
@@ -262,34 +179,10 @@
   }
 </style>
 
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
 <script>
   (function () {
     let data = [];
 
-<<<<<<< HEAD
-    let gstFilterValue = "";
-
-    /* GST FILTER */
-    document.querySelectorAll(".filter-btn").forEach((btn) => {
-      btn.onclick = () => {
-        document
-          .querySelectorAll(".filter-btn")
-          .forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
-        gstFilterValue = btn.dataset.value;
-        applyFilters();
-      };
-    });
-
-    function applyFilters() {
-      let filtered = [...data];
-      const search = document.getElementById("searchInput").value.toLowerCase();
-      const quarter = document.getElementById("quarterFilter").value;
-
-      if (gstFilterValue === "empty") {
-        filtered = filtered.filter((d) => !d.gst);
-=======
     function formatEmail(email) {
       if (!email) return "";
       email = email.toLowerCase().trim();
@@ -312,7 +205,6 @@
 
       if (arnFilter === "filled") {
         filtered = filtered.filter((d) => d.arn && d.date);
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
       }
 
       if (quarter) {
@@ -349,11 +241,6 @@
         <td>${r.email}</td>
         <td>${r.periodicity}</td>
         <td>${r.quarter}</td>
-<<<<<<< HEAD
-        <td>${r.arn}</td>
-        <td>${r.date}</td>
-        ${window.isAdmin ? `<td><button style="background: #e11d48; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px;" onclick="deleteRecord('${r.db_id}', 'cmp')">Delete</button></td>` : ''}
-=======
         <td>${r.arn ? r.arn : '<span class="null">NULL</span>'}</td>
         <td>${r.date ? r.date : '<span class="null">NULL</span>'}</td>
         ${
@@ -361,7 +248,6 @@
             ? `<td><button style="background:#e11d48;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;font-size:12px;" onclick="deleteRecord('${r.db_id}','cmp')">Delete</button></td>`
             : ""
         }
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
       </tr>
     `,
         )
@@ -369,18 +255,9 @@
     }
 
     async function loadRows() {
-<<<<<<< HEAD
-      if (window.isAdmin && !document.getElementById("actionTh")) {
-        const theadTr = document.querySelector("table thead tr");
-        if (theadTr) theadTr.innerHTML += '<th id="actionTh">Action</th>';
-      }
-      const response = await fetch("/api/cmp/list");
-      const result = await response.json();
-=======
       const response = await fetch("/api/cmp/list");
       const result = await response.json();
 
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
       data = (result.data || []).map((row) => ({
         db_id: row.id,
         name: row.name || "-",
@@ -389,29 +266,6 @@
         password: row.password || "-",
         concern: row.concern_person || "-",
         contact: row.contact_no || "-",
-<<<<<<< HEAD
-        email: row.email_id || "-",
-        periodicity: row.periodicity || "-",
-        quarter: row.quarter || "-",
-        arn: row.cmp08_arn_no || "-",
-        date: row.cmp08_filing_date || "-",
-      }));
-      renderTable(data);
-    }
-
-    window.deleteRecord = async function(id, type) {
-      if (!confirm("Are you sure you want to delete this record?")) return;
-      const res = await fetch(`/api/admin/data/delete_${type}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id })
-      });
-      if (res.ok) {
-        loadRows();
-      } else {
-        alert("Failed to delete record");
-      }
-=======
         email: formatEmail(row.email_id),
         periodicity: row.periodicity || "-",
         quarter: row.quarter || "-",
@@ -438,7 +292,6 @@
       setTimeout(() => {
         btn.classList.remove("loading");
       }, 600);
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
     };
 
     document
@@ -447,27 +300,9 @@
     document
       .getElementById("quarterFilter")
       .addEventListener("change", applyFilters);
-<<<<<<< HEAD
-
-    window.resetFilters = function () {
-      gstFilterValue = "";
-      document
-        .querySelectorAll(".filter-btn")
-        .forEach((b) => b.classList.remove("active"));
-      document
-        .querySelector(".filter-btn[data-value='']")
-        .classList.add("active");
-
-      document.getElementById("searchInput").value = "";
-      document.getElementById("quarterFilter").value = "";
-
-      loadRows();
-    };
-=======
     document
       .getElementById("arnFilter")
       .addEventListener("change", applyFilters);
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
 
     loadRows();
   })();

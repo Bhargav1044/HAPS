@@ -231,20 +231,13 @@
 
     if (!form) return;
 
-<<<<<<< HEAD
-=======
     /* ✅ FIXED OPTION RENDERING */
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
     monthList.innerHTML = `<option disabled selected>Select Month</option>`;
     months.forEach((m) => {
       monthList.innerHTML += `<option value="${m}">${m}</option>`;
     });
 
-<<<<<<< HEAD
-    /* 🔍 GST SEARCH → REDIRECT */
-=======
     /* 🔍 GST SEARCH → REDIRECT (basic) */
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
     window.openGST = function () {
       const gst = document.getElementById("gstSearch").value;
 
@@ -253,30 +246,15 @@
         return;
       }
 
-<<<<<<< HEAD
-      // autofill in form
-      document.getElementById("gst").value = gst.toUpperCase();
-
-      // open portal
-      window.open("https://services.gst.gov.in/services/login", "_blank");
-    };
-
-    /* VALIDATION */
-=======
       document.getElementById("gst").value = gst.toUpperCase();
       window.open("https://services.gst.gov.in/services/login", "_blank");
     };
 
     /* ✅ FORM SUBMIT */
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
     document
       .getElementById("updateForm")
       .addEventListener("submit", async function (e) {
         e.preventDefault();
-<<<<<<< HEAD
-=======
-
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
         const gst = document.getElementById("gst").value.trim().toUpperCase();
 
         if (!/^[0-9A-Z]{15}$/.test(gst)) {
@@ -284,8 +262,6 @@
           return;
         }
 
-<<<<<<< HEAD
-=======
         /* ✅ EMAIL FIX */
         let emailInput = document.getElementById("emailId");
         let email = emailInput.value.trim().toLowerCase();
@@ -297,7 +273,6 @@
 
         emailInput.value = email;
 
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
         const response = await fetch("/api/gstr1/update-profile", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -306,27 +281,17 @@
             gst_no: gst,
             user_id: document.getElementById("userId").value.trim(),
             password: document.getElementById("password").value.trim(),
-<<<<<<< HEAD
-            concern_person: document.getElementById("concernPerson").value.trim(),
-            contact_no: document.getElementById("contactNo").value.trim(),
-            email_id: document.getElementById("emailId").value.trim(),
-=======
             concern_person: document
               .getElementById("concernPerson")
               .value.trim(),
             contact_no: document.getElementById("contactNo").value.trim(),
             email_id: email,
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
             periodicity: "Monthly",
             month: monthList.value,
           }),
         });
 
         const result = await response.json();
-<<<<<<< HEAD
-=======
-
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
         if (response.ok && result.success) {
           if (message) {
             message.textContent = "Updated successfully";
@@ -338,31 +303,22 @@
         }
       });
 
-<<<<<<< HEAD
-    window.openGST = async function () {
-      const gst = document.getElementById("gstSearch").value.trim().toUpperCase();
-=======
     /* 🔥 UPDATED GST SEARCH (AUTO FILL ONLY) */
     window.openGST = async function () {
       const gst = document
         .getElementById("gstSearch")
         .value.trim()
         .toUpperCase();
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
 
       if (!/^[0-9A-Z]{15}$/.test(gst)) {
         alert("Enter valid GST number");
         return;
       }
 
-<<<<<<< HEAD
-      const response = await fetch(`/api/gstr1/by-gst?gst_no=${encodeURIComponent(gst)}`);
-=======
       const response = await fetch(
         `/api/gstr1/by-gst?gst_no=${encodeURIComponent(gst)}`,
       );
 
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
       const result = await response.json();
       const row = result.data && result.data[0];
 
@@ -371,24 +327,17 @@
         return;
       }
 
-<<<<<<< HEAD
-=======
       /* ✅ AUTO FILL */
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
       document.getElementById("gst").value = row.gst_no || "";
       document.getElementById("name").value = row.name || "";
       document.getElementById("userId").value = row.user_id || "";
       document.getElementById("password").value = row.password || "";
       document.getElementById("concernPerson").value = row.concern_person || "";
       document.getElementById("contactNo").value = row.contact_no || "";
-<<<<<<< HEAD
-      document.getElementById("emailId").value = row.email_id || "";
-=======
       document.getElementById("emailId").value = (
         row.email_id || ""
       ).toLowerCase();
 
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
       if (row.month) {
         monthList.value = row.month;
       }

@@ -5,32 +5,12 @@
 
     <div class="header-actions">
       <input type="text" id="searchInput" placeholder="Search..." />
-<<<<<<< HEAD
-      <button onclick="resetFilters()">
-=======
       <button id="refreshBtn" onclick="resetFilters()">
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
         <i class="fas fa-rotate"></i>
       </button>
     </div>
   </div>
 
-<<<<<<< HEAD
-  <!-- FILTERS -->
-  <div class="filter-box">
-    <!-- GST FILTER (TOGGLE STYLE) -->
-    <div class="gst-filter">
-      <button class="filter-btn active" data-value="">All</button>
-      <button class="filter-btn" data-value="empty">GST Empty</button>
-    </div>
-
-    <!-- RANGE SLIDER -->
-    <div class="range-box">
-      <label>Month Range</label>
-      <input type="range" id="startRange" min="0" max="12" value="0" />
-      <input type="range" id="endRange" min="0" max="12" value="12" />
-      <div class="range-label" id="rangeLabel"></div>
-=======
   <!-- 🔥 SINGLE LINE FILTER BAR -->
   <div class="filter-bar">
     <!-- GSTR1 FILTER -->
@@ -59,7 +39,6 @@
       <input type="range" id="startRange" min="0" max="12" value="0" />
       <input type="range" id="endRange" min="0" max="12" value="12" />
       <span id="rangeLabel"></span>
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
     </div>
   </div>
 
@@ -94,36 +73,16 @@
 </div>
 
 <style>
-<<<<<<< HEAD
-  /* ===== WRAPPER ===== */
-=======
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
   .form-wrapper {
     padding: 15px;
   }
 
-<<<<<<< HEAD
-  /* HEADER */
-  .table-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 18px;
-  }
-
-  .table-header h2 {
-    font-size: 20px;
-    font-weight: 700;
-  }
-
-  /* SEARCH */
-=======
   .table-header {
     display: flex;
     justify-content: space-between;
     margin-bottom: 15px;
   }
 
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
   .header-actions {
     display: flex;
     gap: 10px;
@@ -133,10 +92,6 @@
     padding: 10px;
     border-radius: 10px;
     border: 1px solid #cbd5e1;
-<<<<<<< HEAD
-    width: 240px;
-=======
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
   }
 
   .header-actions button {
@@ -145,57 +100,6 @@
     border-radius: 10px;
     border: none;
     padding: 10px;
-<<<<<<< HEAD
-  }
-
-  /* ===== FILTERS ===== */
-  .filter-box {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-  }
-
-  /* GST BUTTON FILTER */
-  .gst-filter {
-    display: flex;
-    gap: 10px;
-  }
-
-  .filter-btn {
-    padding: 8px 14px;
-    border-radius: 20px;
-    border: 1px solid #cbd5e1;
-    background: white;
-    cursor: pointer;
-  }
-
-  .filter-btn.active {
-    background: #27334d;
-    color: white;
-    border: none;
-  }
-
-  /* RANGE */
-  .range-box {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
-
-  .range-box input {
-    width: 250px;
-  }
-
-  .range-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: #27334d;
-  }
-
-  /* ===== TABLE ===== */
-=======
     cursor: pointer;
   }
 
@@ -254,20 +158,12 @@
     font-weight: 600;
   }
 
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
   .table-container {
     background: rgba(255, 255, 255, 0.12);
     backdrop-filter: blur(14px);
     border-radius: 16px;
-<<<<<<< HEAD
-
-    max-height: 400px; /* 🔥 vertical scroll */
-    overflow-y: auto;
-    overflow-x: auto;
-=======
     max-height: 420px;
     overflow: auto;
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
   }
 
   table {
@@ -275,20 +171,6 @@
     border-collapse: collapse;
   }
 
-<<<<<<< HEAD
-  /* HEADER */
-  th {
-    position: sticky;
-    top: 0;
-
-    background: rgba(255, 255, 255, 0.9);
-    color: #27334d;
-    font-weight: 700;
-    padding: 12px;
-  }
-
-  /* ROW */
-=======
   th {
     position: sticky;
     top: 0;
@@ -296,30 +178,20 @@
     padding: 12px;
   }
 
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
   td {
     padding: 10px;
   }
 
-<<<<<<< HEAD
-  /* HOVER */
-=======
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
   tr:hover {
     background: rgba(37, 99, 235, 0.08);
   }
 
-<<<<<<< HEAD
-  .loading {
-    text-align: center;
-=======
   .null {
     background: #e11d48;
     color: white;
     padding: 3px 8px;
     border-radius: 6px;
     font-size: 12px;
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
   }
 </style>
 
@@ -343,46 +215,14 @@
 
     let data = [];
 
-<<<<<<< HEAD
-    let gstFilterValue = "";
-
-    /* ELEMENTS */
-=======
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
     const startRange = document.getElementById("startRange");
     const endRange = document.getElementById("endRange");
     const label = document.getElementById("rangeLabel");
 
-<<<<<<< HEAD
-    /* LABEL */
-=======
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
     function updateLabel() {
       label.innerText = `${months[startRange.value]} → ${months[endRange.value]}`;
     }
 
-<<<<<<< HEAD
-    /* GST BUTTON FILTER */
-    document.querySelectorAll(".filter-btn").forEach((btn) => {
-      btn.onclick = () => {
-        document
-          .querySelectorAll(".filter-btn")
-          .forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
-        gstFilterValue = btn.dataset.value;
-        applyFilters();
-      };
-    });
-
-    /* FILTER */
-    function applyFilters() {
-      let filtered = [...data];
-      const search = document.getElementById("searchInput").value.toLowerCase();
-
-      if (gstFilterValue === "empty") {
-        filtered = filtered.filter((d) => !d.gst);
-      }
-=======
     function applyFilters() {
       let filtered = [...data];
 
@@ -399,7 +239,6 @@
         filtered = filtered.filter((d) => !d.form3bArn || !d.form3bDate);
       if (f3b === "filled")
         filtered = filtered.filter((d) => d.form3bArn && d.form3bDate);
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
 
       filtered = filtered.filter((d) => {
         const idx = months.indexOf(d.month);
@@ -415,10 +254,6 @@
       renderTable(filtered);
     }
 
-<<<<<<< HEAD
-    /* TABLE */
-=======
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
     function renderTable(rows) {
       const body = document.getElementById("tableBody");
 
@@ -430,18 +265,6 @@
       body.innerHTML = rows
         .map(
           (r) => `
-<<<<<<< HEAD
-    <tr>
-      <td>${r.name}</td>
-      <td>${r.gst || "-"}</td>
-      <td>${r.id}</td><td>${r.password}</td><td>${r.concern}</td><td>${r.contact}</td>
-      <td>${r.email}</td><td>${r.periodicity}</td>
-      <td>${r.month}</td>
-      <td>${r.gstr1Arn}</td><td>${r.gstr1Date}</td><td>${r.form3bArn}</td><td>${r.form3bDate}</td>
-      ${window.isAdmin ? `<td><button style="background: #e11d48; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px;" onclick="deleteRecord('${r.db_id}', 'gstr1')">Delete</button></td>` : ''}
-    </tr>
-  `,
-=======
         <tr>
           <td>${r.name}</td>
           <td>${r.gst || "-"}</td>
@@ -458,27 +281,15 @@
           <td>${r.form3bDate ? r.form3bDate : '<span class="null">NULL</span>'}</td>
         </tr>
       `,
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
         )
         .join("");
     }
 
     async function loadRows() {
-<<<<<<< HEAD
-      if (window.isAdmin && !document.getElementById("actionTh")) {
-        const theadTr = document.querySelector("table thead tr");
-        if (theadTr) theadTr.innerHTML += '<th id="actionTh">Action</th>';
-      }
-      const response = await fetch("/api/gstr1/list");
-      const result = await response.json();
-      data = (result.data || []).map((row) => ({
-        db_id: row.id,
-=======
       const response = await fetch("/api/gstr1/list");
       const result = await response.json();
 
       data = (result.data || []).map((row) => ({
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
         name: row.name || "-",
         gst: row.gst_no || "",
         id: row.user_id || "-",
@@ -487,32 +298,6 @@
         contact: row.contact_no || "-",
         email: row.email_id || "-",
         periodicity: row.periodicity || "-",
-<<<<<<< HEAD
-        month: row.month || "-",
-        gstr1Arn: row.gstr1_arn_no || "-",
-        gstr1Date: row.gstr1_filing_date || "-",
-        form3bArn: row.form3b_arn_no || "-",
-        form3bDate: row.form3b_filing_date || "-",
-      }));
-      renderTable(data);
-    }
-
-    window.deleteRecord = async function(id, type) {
-      if (!confirm("Are you sure you want to delete this record?")) return;
-      const res = await fetch(`/api/admin/data/delete_${type}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id })
-      });
-      if (res.ok) {
-        loadRows();
-      } else {
-        alert("Failed to delete record");
-      }
-    };
-
-    /* EVENTS */
-=======
         month: row.month || "",
         gstr1Arn: row.gstr1_arn_no || "",
         gstr1Date: row.gstr1_filing_date || "",
@@ -523,7 +308,6 @@
       renderTable(data);
     }
 
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
     startRange.oninput = () => {
       updateLabel();
       applyFilters();
@@ -536,26 +320,6 @@
     document
       .getElementById("searchInput")
       .addEventListener("input", applyFilters);
-<<<<<<< HEAD
-
-    /* RESET */
-    window.resetFilters = function () {
-      startRange.value = 0;
-      endRange.value = 12;
-      gstFilterValue = "";
-      document
-        .querySelectorAll(".filter-btn")
-        .forEach((b) => b.classList.remove("active"));
-      document
-        .querySelector(".filter-btn[data-value='']")
-        .classList.add("active");
-      document.getElementById("searchInput").value = "";
-      updateLabel();
-      loadRows();
-    };
-
-    /* INIT */
-=======
     document
       .getElementById("g1Filter")
       .addEventListener("change", applyFilters);
@@ -582,7 +346,6 @@
       }, 600);
     };
 
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
     updateLabel();
     loadRows();
   })();

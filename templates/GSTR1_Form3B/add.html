@@ -278,8 +278,6 @@
 
     if (!periodicity || !start || !end || !form) return;
 
-<<<<<<< HEAD
-=======
     // 🔥 EMAIL FORMAT FUNCTION (ONLY ADDITION)
     function formatEmail(email) {
       if (!email) return "";
@@ -291,7 +289,6 @@
       return email;
     }
 
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
     // default
     start.innerHTML = `<option disabled selected>Select Month</option>`;
     end.innerHTML = `<option disabled selected>Select Month</option>`;
@@ -334,14 +331,10 @@
         password: document.getElementById("password").value.trim(),
         concern_person: document.getElementById("concernPerson").value.trim(),
         contact_no: document.getElementById("phone").value.trim(),
-<<<<<<< HEAD
-        email_id: document.getElementById("email").value.trim(),
-=======
 
         // 🔥 APPLY EMAIL FIX HERE ONLY
         email_id: formatEmail(document.getElementById("email").value),
 
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
         periodicity: periodicity.value,
         months: getMonthsInRange(start.value, end.value),
       };

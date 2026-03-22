@@ -31,15 +31,11 @@
               <option value="manual">Enter Manually</option>
             </select>
           </div>
-<<<<<<< HEAD
-          <div class="input-box" id="manualArnBox" style="display: none; margin-top: 8px">
-=======
           <div
             class="input-box"
             id="manualArnBox"
             style="display: none; margin-top: 8px"
           >
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
             <i class="fas fa-keyboard"></i>
             <input id="manualArn" placeholder="Enter ARN Number" />
           </div>
@@ -176,12 +172,8 @@
         return;
       }
 
-<<<<<<< HEAD
-      const arnValue = arnSelect.value === "manual" ? manualArn.value.trim() : arnSelect.value;
-=======
       const arnValue =
         arnSelect.value === "manual" ? manualArn.value.trim() : arnSelect.value;
->>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
 
       const response = await fetch("/api/cmp/update-arn", {
         method: "POST",
