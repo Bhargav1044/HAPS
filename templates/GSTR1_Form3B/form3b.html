@@ -250,7 +250,12 @@
         }
 
         const selectedArn = arnSelect.value;
+<<<<<<< HEAD
         const arnValue = selectedArn === "manual" ? manualInput.value.trim() : selectedArn;
+=======
+        const arnValue =
+          selectedArn === "manual" ? manualInput.value.trim() : selectedArn;
+>>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
 
         const response = await fetch("/api/gstr1/update-form3b", {
           method: "POST",

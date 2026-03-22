@@ -1,5 +1,9 @@
 # Python
+<<<<<<< HEAD
 .venv/
+=======
+venv/
+>>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
 __pycache__/
 *.pyc
 

@@ -9,24 +9,13 @@ import ssl
 ssl_context = ssl.create_default_context(cafile=certifi.where())
 
 # ================= SUPABASE CONFIG =================
+
+SUPABASE_URL = "https://fxzzdmpusmhroyxjzfwk.supabase.co"
+SUPABASE_KEY ="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4enpkbXB1c21ocm95eGp6ZndrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjAyOTc3MiwiZXhwIjoyMDg3NjA1NzcyfQ.OPDu7-jmaFc4vD16zDR8BcsoJjYWRiCOfmFdKtP3ZYg"
+
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = Flask(__name__)
-
-
-def _body():
-    return request.get_json(silent=True) or {}
-
-
-def _clean(value):
-    if isinstance(value, str):
-        return value.strip()
-    return value
-
-
-def _clean_gst(value):
-    value = _clean(value)
-    return value.upper() if isinstance(value, str) else value
 
 # ================= LOGIN CREDENTIALS =================
 
@@ -35,6 +24,27 @@ ADMIN_CREDENTIALS = [
 ]
 
 USER_PORTAL = {"email": "user@company.com", "password": "company123"}
+
+
+# ================= HELPERS =================
+
+def _body():
+    """Safely get JSON body"""
+    if request.is_json:
+        return request.get_json()
+    return {}
+
+def _clean(value):
+    """Clean string input"""
+    if value is None:
+        return None
+    return str(value).strip()
+
+def _clean_gst(value):
+    """Clean GST number (uppercase + trim)"""
+    if value is None:
+        return None
+    return str(value).strip().upper()
 
 # ================= PAGE ROUTES =================
 
@@ -72,7 +82,7 @@ def user_dashboard():
 
 @app.route("/api/master-file", methods=["POST"])
 def add_master_file():
-    data = _body()
+    data = _body() # type: ignore
     print("MASTER DATA RECEIVED:", data)
     return jsonify({"success": True, "data": data})
     
@@ -134,21 +144,21 @@ def cmp_view():
 @app.route("/api/gstr1/add", methods=["POST"])
 def add_gstr1():
     try:
-        data = _body()
+        data = _body() # type: ignore
         base_payload = {
-            "name": _clean(data.get("name")),
-            "gst_no": _clean_gst(data.get("gst_no")),
-            "user_id": _clean(data.get("user_id")),
-            "password": _clean(data.get("password")),
-            "concern_person": _clean(data.get("concern_person")),
-            "contact_no": _clean(data.get("contact_no")),
-            "email_id": _clean(data.get("email_id")),
-            "periodicity": _clean(data.get("periodicity"))
+            "name": _clean(data.get("name")), # type: ignore
+            "gst_no": _clean_gst(data.get("gst_no")), # type: ignore
+            "user_id": _clean(data.get("user_id")), # type: ignore
+            "password": _clean(data.get("password")), # type: ignore
+            "concern_person": _clean(data.get("concern_person")), # type: ignore
+            "contact_no": _clean(data.get("contact_no")), # type: ignore
+            "email_id": _clean(data.get("email_id")), # type: ignore
+            "periodicity": _clean(data.get("periodicity")) # type: ignore
         }
 
         months = data.get("months")
         if isinstance(months, list):
-            clean_months = [_clean(m) for m in months if _clean(m)]
+            clean_months = [_clean(m) for m in months if _clean(m)] # type: ignore
         else:
             clean_months = []
 
@@ -158,7 +168,7 @@ def add_gstr1():
         else:
             response = supabase.table("gstr1_form3b").insert({
                 **base_payload,
-                "month": _clean(data.get("month"))
+                "month": _clean(data.get("month")) # type: ignore
             }).execute()
 
         # ── AUTO-LINK: upsert consolidated row into gstr9_9c ──

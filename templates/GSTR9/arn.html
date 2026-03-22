@@ -25,7 +25,15 @@
               <option value="manual">Enter Manually</option>
             </select>
           </div>
+<<<<<<< HEAD
           <div class="input-box" id="g9ManualBox" style="display: none; margin-top: 8px">
+=======
+          <div
+            class="input-box"
+            id="g9ManualBox"
+            style="display: none; margin-top: 8px"
+          >
+>>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
             <i class="fas fa-keyboard"></i>
             <input placeholder="Enter ARN Number" id="g9Manual" />
           </div>
@@ -52,7 +60,15 @@
               <option value="manual">Enter Manually</option>
             </select>
           </div>
+<<<<<<< HEAD
           <div class="input-box" id="g9cManualBox" style="display: none; margin-top: 8px">
+=======
+          <div
+            class="input-box"
+            id="g9cManualBox"
+            style="display: none; margin-top: 8px"
+          >
+>>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
             <i class="fas fa-keyboard"></i>
             <input placeholder="Enter ARN Number" id="g9cManual" />
           </div>
@@ -212,8 +228,15 @@
         return;
       }
 
+<<<<<<< HEAD
       const gstr9Arn = g9Select.value === "manual" ? g9Manual.value.trim() : g9Select.value;
       const gstr9cArn = g9cSelect.value === "manual" ? g9cManual.value.trim() : g9cSelect.value;
+=======
+      const gstr9Arn =
+        g9Select.value === "manual" ? g9Manual.value.trim() : g9Select.value;
+      const gstr9cArn =
+        g9cSelect.value === "manual" ? g9cManual.value.trim() : g9cSelect.value;
+>>>>>>> 40592b5eb39496ab255541435fc98869745bf5ef
 
       const response = await fetch("/api/gstr9/update-arn", {
         method: "POST",
