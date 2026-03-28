@@ -11,7 +11,7 @@
     </div>
   </div>
 
-  <!-- 🔥 SINGLE LINE FILTER BAR -->
+  <!-- FILTER BAR -->
   <div class="filter-bar">
     <!-- ARN STATUS FILTER -->
     <div class="filter-group">
@@ -32,6 +32,17 @@
         <option>2027</option>
       </select>
     </div>
+  </div>
+
+  <!-- EXPORT / IMPORT BAR -->
+  <div class="action-bar">
+    <button class="action-btn export-btn" onclick="exportToExcel()">
+      <i class="fas fa-file-excel"></i> Export to Excel
+    </button>
+    <button class="action-btn import-btn" onclick="document.getElementById('importFile').click()">
+      <i class="fas fa-upload"></i> Import Excel
+    </button>
+    <input type="file" id="importFile" accept=".xlsx,.xls" style="display:none" onchange="importFromExcel(event)" />
   </div>
 
   <!-- TABLE -->
@@ -94,7 +105,6 @@
     cursor: pointer;
   }
 
-  /* 🔥 REFRESH ANIMATION */
   #refreshBtn i {
     transition: transform 0.5s ease;
   }
@@ -104,15 +114,10 @@
   }
 
   @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
 
-  /* 🔥 FILTER BAR */
   .filter-bar {
     display: flex;
     gap: 20px;
@@ -132,6 +137,40 @@
     border-radius: 8px;
     border: 1px solid #cbd5e1;
     min-width: 160px;
+  }
+
+  /* ACTION BAR */
+  .action-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .action-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: opacity 0.2s;
+  }
+
+  .action-btn:hover {
+    opacity: 0.85;
+  }
+
+  .export-btn {
+    background: #16a34a;
+    color: white;
+  }
+
+  .import-btn {
+    background: #2563eb;
+    color: white;
   }
 
   .table-container {
@@ -177,6 +216,9 @@
   }
 </style>
 
+<!-- SheetJS for Excel export/import -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+
 <!-- ================= SCRIPT ================= -->
 <script>
   (function () {
@@ -216,7 +258,7 @@
       const body = document.getElementById("tableBody");
 
       if (rows.length === 0) {
-        body.innerHTML = `<tr><td colspan="10">No Data Found</td></tr>`;
+        body.innerHTML = `<tr><td colspan="11">No Data Found</td></tr>`;
         return;
       }
 
@@ -274,6 +316,9 @@
         gstr4date: row.gstr4_filing_date || "",
       }));
 
+      // Sort ascending by name
+      data.sort((a, b) => a.name.localeCompare(b.name));
+
       renderTable(data);
     }
 
@@ -290,20 +335,64 @@
       else alert("Delete failed");
     };
 
-    document
-      .getElementById("searchInput")
-      .addEventListener("input", applyFilters);
-    document
-      .getElementById("yearFilter")
-      .addEventListener("change", applyFilters);
-    document
-      .getElementById("arnFilter")
-      .addEventListener("change", applyFilters);
+    // Export to Excel
+    window.exportToExcel = function () {
+      const table = document.querySelector(".table-container table");
+      const wb = XLSX.utils.table_to_book(table, { sheet: "GSTR4" });
+      XLSX.writeFile(wb, "GSTR4_Data.xlsx");
+    };
+
+    // Import from Excel
+    window.importFromExcel = async function (event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async function (e) {
+        try {
+          const wb = XLSX.read(e.target.result, { type: "array", cellDates: true });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(ws);
+
+          let imported = 0;
+          for (const row of rows) {
+            const payload = {
+              name: row["Name"] || row["name"] || "",
+              gst_no: (row["GST No"] || row["gst_no"] || "").toString().toUpperCase(),
+              user_id: row["ID"] || row["user_id"] || "",
+              password: row["Password"] || row["password"] || "",
+              concern_person: row["Concern"] || row["concern_person"] || "",
+              contact_no: row["Contact"] || row["contact_no"] || "",
+              email_id: row["Email"] || row["email_id"] || "",
+              periodicity: row["Periodicity"] || row["periodicity"] || "Quarterly",
+            };
+
+            if (!payload.name || !payload.gst_no) continue;
+
+            const res = await fetch("/api/gstr4/import", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+            if (res.ok) imported++;
+          }
+
+          alert(`Successfully imported ${imported} rows`);
+          event.target.value = "";
+          loadRows();
+        } catch (err) {
+          alert("Import failed: " + err.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    };
+
+    document.getElementById("searchInput").addEventListener("input", applyFilters);
+    document.getElementById("yearFilter").addEventListener("change", applyFilters);
+    document.getElementById("arnFilter").addEventListener("change", applyFilters);
 
     window.resetFilters = async function () {
       const btn = document.getElementById("refreshBtn");
-
-      // 🔥 START ANIMATION
       btn.classList.add("loading");
 
       document.getElementById("searchInput").value = "";
@@ -312,7 +401,6 @@
 
       await loadRows();
 
-      // 🔥 STOP ANIMATION
       setTimeout(() => {
         btn.classList.remove("loading");
       }, 600);

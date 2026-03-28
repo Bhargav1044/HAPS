@@ -5,8 +5,26 @@ import os
 from datetime import datetime
 import certifi
 import ssl
+import json
 
 ssl_context = ssl.create_default_context(cafile=certifi.where())
+
+# ================= CONFIG / TERM SETTINGS =================
+CONFIG_FILE = "config.json"
+
+def get_current_term():
+    if not os.path.exists(CONFIG_FILE):
+        return "2025-26"
+    try:
+        with open(CONFIG_FILE, "r") as f:
+            data = json.load(f)
+            return data.get("current_term", "2025-26")
+    except:
+        return "2025-26"
+
+def set_current_term(term):
+    with open(CONFIG_FILE, "w") as f:
+        json.dump({"current_term": term}, f)
 
 # ================= SUPABASE CONFIG =================
 
@@ -87,6 +105,79 @@ def admin_users_page():
 def user_dashboard():
     return render_template("user_dashboard.html")
 
+@app.route("/api/settings/term", methods=["GET", "POST"])
+def manage_term():
+    if request.method == "POST":
+        data = _body()
+        set_current_term(data.get("term"))
+        return jsonify({"success": True})
+    return jsonify({"success": True, "term": get_current_term()})
+
+@app.route("/api/clients/unique", methods=["GET"])
+def unique_clients():
+    term = request.args.get("term") or get_current_term()
+    clients = {} # gst_no -> obj
+
+    def fetch_clients(table):
+        res = supabase.table(table).select("name, gst_no, user_id, password, concern_person, contact_no, email_id, periodicity").eq("term", term).execute()
+        for row in (res.data or []):
+            if row["gst_no"] not in clients:
+                clients[row["gst_no"]] = row
+
+    fetch_clients("gstr1_form3b")
+    fetch_clients("cmp08")
+    fetch_clients("gstr9_9c")
+    fetch_clients("gstr4")
+
+    return jsonify({"success": True, "data": list(clients.values())})
+
+@app.route("/api/admin/rollover", methods=["POST"])
+def rollover_clients():
+    data = _body()
+    new_term = data.get("new_term")
+    clients = data.get("clients", [])
+    if not new_term:
+        return jsonify({"success": False, "error": "Missing new_term param"}), 400
+
+    try:
+        parts = new_term.split("-")
+        y1 = int(parts[0])
+        y2 = 2000 + int(parts[1]) if len(parts[1]) == 2 else int(parts[1])
+
+        months = [
+            f"Apr {y1}", f"May {y1}", f"Jun {y1}", f"Jul {y1}", f"Aug {y1}", f"Sep {y1}", 
+            f"Oct {y1}", f"Nov {y1}", f"Dec {y1}", f"Jan {y2}", f"Feb {y2}", f"Mar {y2}"
+        ]
+        quarters = [
+            f"Apr - Jun {y1}", f"Jul - Sep {y1}", f"Oct - Dec {y1}", f"Jan - Mar {y2}"
+        ]
+
+        for client in clients:
+            gst = client.get("gst_no")
+            if not gst: continue
+            
+            p = client.get("periodicity", "Monthly")
+            base = {
+                "name": client.get("name"), "gst_no": gst, "user_id": client.get("user_id"),
+                "password": client.get("password"), "concern_person": client.get("concern_person"),
+                "contact_no": client.get("contact_no"), "email_id": client.get("email_id"),
+                "periodicity": p, "term": new_term
+            }
+
+            if p == "Monthly":
+                gstr1_rows = [{**base, "month": m} for m in months]
+                supabase.table("gstr1_form3b").insert(gstr1_rows).execute()
+                supabase.table("gstr9_9c").insert(base).execute()
+            elif p == "Quarterly":
+                cmp_rows = [{**base, "quarter": q} for q in quarters]
+                supabase.table("cmp08").insert(cmp_rows).execute()
+                supabase.table("gstr4").insert(base).execute()
+
+        set_current_term(new_term)
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 @app.route("/api/master-file", methods=["POST"])
 def add_master_file():
     data = _body() # type: ignore
@@ -160,7 +251,8 @@ def add_gstr1():
             "concern_person": _clean(data.get("concern_person")), # type: ignore
             "contact_no": _clean(data.get("contact_no")), # type: ignore
             "email_id": _clean(data.get("email_id")), # type: ignore
-            "periodicity": _clean(data.get("periodicity")) # type: ignore
+            "periodicity": _clean(data.get("periodicity")), # type: ignore
+            "term": get_current_term()
         }
 
         months = data.get("months")
@@ -188,6 +280,7 @@ def add_gstr1():
             "contact_no": base_payload["contact_no"],
             "email_id": base_payload["email_id"],
             "periodicity": base_payload["periodicity"],
+            "term": base_payload["term"]
         }
         existing = supabase.table("gstr9_9c").select("id").eq("gst_no", base_payload["gst_no"]).execute()
         if existing.data:
@@ -211,7 +304,8 @@ def add_cmp():
             "concern_person": _clean(data.get("concern_person")),
             "contact_no": _clean(data.get("contact_no")),
             "email_id": _clean(data.get("email_id")),
-            "periodicity": _clean(data.get("periodicity"))
+            "periodicity": _clean(data.get("periodicity")),
+            "term": get_current_term()
         }
 
         quarters = data.get("quarters")
@@ -239,6 +333,7 @@ def add_cmp():
             "contact_no": base_payload["contact_no"],
             "email_id": base_payload["email_id"],
             "periodicity": base_payload["periodicity"],
+            "term": base_payload["term"]
         }
         existing = supabase.table("gstr4").select("id").eq("gst_no", base_payload["gst_no"]).execute()
         if existing.data:
@@ -254,7 +349,8 @@ def add_cmp():
 @app.route("/api/gstr1/list", methods=["GET"])
 def gstr1_list():
     try:
-        response = supabase.table("gstr1_form3b").select("*").order("created_at", desc=True).execute()
+        term = get_current_term()
+        response = supabase.table("gstr1_form3b").select("*").eq("term", term).order("created_at", desc=False).execute()
         return jsonify({"success": True, "data": response.data or []})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -263,7 +359,8 @@ def gstr1_list():
 @app.route("/api/cmp/list", methods=["GET"])
 def cmp_list():
     try:
-        response = supabase.table("cmp08").select("*").order("created_at", desc=True).execute()
+        term = get_current_term()
+        response = supabase.table("cmp08").select("*").eq("term", term).order("created_at", desc=False).execute()
         return jsonify({"success": True, "data": response.data or []})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -272,7 +369,8 @@ def cmp_list():
 @app.route("/api/gstr4/list", methods=["GET"])
 def gstr4_list():
     try:
-        response = supabase.table("gstr4").select("*").order("created_at", desc=True).execute()
+        term = get_current_term()
+        response = supabase.table("gstr4").select("*").eq("term", term).order("created_at", desc=False).execute()
         return jsonify({"success": True, "data": response.data or []})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -281,7 +379,8 @@ def gstr4_list():
 @app.route("/api/gstr9/list", methods=["GET"])
 def gstr9_list():
     try:
-        response = supabase.table("gstr9_9c").select("*").order("created_at", desc=True).execute()
+        term = get_current_term()
+        response = supabase.table("gstr9_9c").select("*").eq("term", term).order("created_at", desc=False).execute()
         return jsonify({"success": True, "data": response.data or []})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -487,6 +586,100 @@ def update_gstr9():
 
     return jsonify(response.data)
 
+# ================= IMPORT ENDPOINTS =================
+
+@app.route("/api/gstr1/import", methods=["POST"])
+def import_gstr1():
+    try:
+        data = _body()
+        payload = {
+            "name": _clean(data.get("name")),
+            "gst_no": _clean_gst(data.get("gst_no")),
+            "user_id": _clean(data.get("user_id")),
+            "password": _clean(data.get("password")),
+            "concern_person": _clean(data.get("concern_person")),
+            "contact_no": _clean(data.get("contact_no")),
+            "email_id": _clean(data.get("email_id")),
+            "periodicity": _clean(data.get("periodicity")),
+            "month": _clean(data.get("month")),
+            "term": get_current_term()
+        }
+        response = supabase.table("gstr1_form3b").insert(payload).execute()
+        return jsonify({"success": True, "data": response.data})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/cmp/import", methods=["POST"])
+def import_cmp():
+    try:
+        data = _body()
+        payload = {
+            "name": _clean(data.get("name")),
+            "gst_no": _clean_gst(data.get("gst_no")),
+            "user_id": _clean(data.get("user_id")),
+            "password": _clean(data.get("password")),
+            "concern_person": _clean(data.get("concern_person")),
+            "contact_no": _clean(data.get("contact_no")),
+            "email_id": _clean(data.get("email_id")),
+            "periodicity": _clean(data.get("periodicity")),
+            "quarter": _clean(data.get("quarter")),
+            "term": get_current_term()
+        }
+        response = supabase.table("cmp08").insert(payload).execute()
+        return jsonify({"success": True, "data": response.data})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/gstr9/import", methods=["POST"])
+def import_gstr9():
+    try:
+        data = _body()
+        payload = {
+            "name": _clean(data.get("name")),
+            "gst_no": _clean_gst(data.get("gst_no")),
+            "user_id": _clean(data.get("user_id")),
+            "password": _clean(data.get("password")),
+            "concern_person": _clean(data.get("concern_person")),
+            "contact_no": _clean(data.get("contact_no")),
+            "email_id": _clean(data.get("email_id")),
+            "periodicity": _clean(data.get("periodicity")),
+            "term": get_current_term()
+        }
+        term = get_current_term()
+        existing = supabase.table("gstr9_9c").select("id").eq("gst_no", payload["gst_no"]).eq("term", term).execute()
+        if existing.data:
+            supabase.table("gstr9_9c").update(payload).eq("gst_no", payload["gst_no"]).eq("term", term).execute()
+        else:
+            supabase.table("gstr9_9c").insert(payload).execute()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/gstr4/import", methods=["POST"])
+def import_gstr4():
+    try:
+        data = _body()
+        payload = {
+            "name": _clean(data.get("name")),
+            "gst_no": _clean_gst(data.get("gst_no")),
+            "user_id": _clean(data.get("user_id")),
+            "password": _clean(data.get("password")),
+            "concern_person": _clean(data.get("concern_person")),
+            "contact_no": _clean(data.get("contact_no")),
+            "email_id": _clean(data.get("email_id")),
+            "periodicity": _clean(data.get("periodicity")),
+            "term": get_current_term()
+        }
+        term = get_current_term()
+        existing = supabase.table("gstr4").select("id").eq("gst_no", payload["gst_no"]).eq("term", term).execute()
+        if existing.data:
+            supabase.table("gstr4").update(payload).eq("gst_no", payload["gst_no"]).eq("term", term).execute()
+        else:
+            supabase.table("gstr4").insert(payload).execute()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 # ================= FIRST LOGIN =================
 
 @app.route("/api/first-login", methods=["POST"])
@@ -587,7 +780,15 @@ def admin_delete_cmp():
 def admin_delete_gstr4():
     try:
         data = request.json
-        supabase.table("gstr4").delete().eq("id", data["id"]).execute()
+        record_id = data.get("id")
+        
+        record = supabase.table("gstr4").select("gst_no").eq("id", record_id).execute()
+        supabase.table("gstr4").delete().eq("id", record_id).execute()
+        
+        if record.data and record.data[0].get("gst_no"):
+            gst_no = record.data[0]["gst_no"]
+            supabase.table("cmp08").delete().eq("gst_no", gst_no).execute()
+            
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -596,7 +797,15 @@ def admin_delete_gstr4():
 def admin_delete_gstr9():
     try:
         data = request.json
-        supabase.table("gstr9_9c").delete().eq("id", data["id"]).execute()
+        record_id = data.get("id")
+        
+        record = supabase.table("gstr9_9c").select("gst_no").eq("id", record_id).execute()
+        supabase.table("gstr9_9c").delete().eq("id", record_id).execute()
+        
+        if record.data and record.data[0].get("gst_no"):
+            gst_no = record.data[0]["gst_no"]
+            supabase.table("gstr1_form3b").delete().eq("gst_no", gst_no).execute()
+            
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500

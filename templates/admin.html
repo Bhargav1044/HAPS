@@ -142,7 +142,14 @@
         <h1 id="pageTitle" style="font-size: 24px; color: #fff">
           User Management
         </h1>
-        <div class="top-actions">
+        <div class="top-actions" style="display: flex; gap: 15px; align-items: center;">
+          <select id="globalTerm" style="padding: 10px; border-radius: 8px; background: #27334d; color: white; border: 1px solid #475569; font-size: 14px; cursor: pointer;">
+            <option value="2024-25">2024-25</option>
+            <option value="2025-26">2025-26</option>
+            <option value="2026-27">2026-27</option>
+            <option value="2027-28">2027-28</option>
+            <option value="2028-29">2028-29</option>
+          </select>
           <button
             class="logout"
             id="logoutBtn"
@@ -165,6 +172,28 @@
         <div style="text-align: center; color: white; margin-top: 50px">
           <i class="fas fa-circle-notch fa-spin fa-3x"></i>
           <p style="margin-top: 15px">Loading...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROLLOVER MODAL -->
+    <div id="rolloverModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center;">
+      <div style="background:#1e293b; color:white; padding:25px; border-radius:12px; width:600px; max-height:80vh; display:flex; flex-direction:column;">
+        <h2 style="margin-top:0;">Change Term & Carry Forward Data</h2>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:15px;" id="rolloverText"></p>
+        
+        <div style="margin-bottom: 10px; display:flex; justify-content:space-between;">
+           <strong>Select Clients to Forward:</strong>
+           <label><input type="checkbox" id="selectAllClients" checked> Select All</label>
+        </div>
+
+        <div id="clientList" style="flex:1; overflow-y:auto; background:#0f172a; padding:15px; border-radius:8px; border:1px solid #334155; display:flex; flex-direction:column; gap:8px;">
+           <i class="fas fa-spinner fa-spin"></i> Loading clients...
+        </div>
+
+        <div style="margin-top:20px; display:flex; justify-content:flex-end; gap:10px;">
+          <button id="cancelRollover" style="background:#475569; color:white; padding:10px 15px; border:none; border-radius:6px; cursor:pointer;">Cancel</button>
+          <button id="confirmRollover" style="background:#2563eb; color:white; padding:10px 15px; border:none; border-radius:6px; cursor:pointer;">Confirm & Change Term</button>
         </div>
       </div>
     </div>
@@ -224,10 +253,113 @@
         window.location.replace("/login");
       });
 
+      // === Rollover Logic ===
+      let currentBackendTerm = "";
+      let uniqueClientsFetched = [];
+
+      async function fetchCurrentTerm() {
+        try {
+          const res = await fetch("/api/settings/term");
+          const data = await res.json();
+          if (data.success) {
+            currentBackendTerm = data.term;
+            document.getElementById("globalTerm").value = currentBackendTerm;
+          }
+        } catch (e) {
+          console.error("Failed to load term", e);
+        }
+      }
+
+      const termSelect = document.getElementById("globalTerm");
+      const rolloverModal = document.getElementById("rolloverModal");
+      const rolloverText = document.getElementById("rolloverText");
+      const clientList = document.getElementById("clientList");
+      const confirmBtn = document.getElementById("confirmRollover");
+      const cancelBtn = document.getElementById("cancelRollover");
+      const selectAll = document.getElementById("selectAllClients");
+
+      termSelect.addEventListener("change", async (e) => {
+        const newTerm = e.target.value;
+        if (newTerm === currentBackendTerm) return;
+
+        rolloverModal.style.display = "flex";
+        rolloverText.innerText = `You are moving from ${currentBackendTerm} to ${newTerm}. Select existing clients below to copy them to the new term (creates blank records for the new year).`;
+        clientList.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Loading clients from ${currentBackendTerm}...`;
+        selectAll.checked = true;
+
+        try {
+          const res = await fetch(`/api/clients/unique?term=${currentBackendTerm}`);
+          const data = await res.json();
+          uniqueClientsFetched = data.data || [];
+
+          if (uniqueClientsFetched.length === 0) {
+              clientList.innerHTML = `<p style="color:#94a3b8;">No clients found in ${currentBackendTerm}. Just changing the term.</p>`;
+          } else {
+              clientList.innerHTML = uniqueClientsFetched.map((c, i) => `
+                <label style="display:flex; gap:10px; align-items:center; background:#1e293b; padding:10px; border-radius:6px; cursor:pointer;">
+                  <input type="checkbox" class="client-cb" data-idx="${i}" checked />
+                  <div style="flex:1;">
+                    <div style="font-weight:600;">${c.name}</div>
+                    <div style="font-size:12px; color:#94a3b8;">GST: ${c.gst_no} | Periodicity: ${c.periodicity}</div>
+                  </div>
+                </label>
+              `).join('');
+          }
+        } catch (err) {
+          clientList.innerHTML = `<p style="color:red;">Error loading clients.</p>`;
+        }
+      });
+
+      selectAll.addEventListener("change", (e) => {
+         document.querySelectorAll(".client-cb").forEach(cb => cb.checked = e.target.checked);
+      });
+
+      cancelBtn.addEventListener("click", () => {
+         rolloverModal.style.display = "none";
+         termSelect.value = currentBackendTerm;
+      });
+
+      confirmBtn.addEventListener("click", async () => {
+         const newTerm = termSelect.value;
+         const selectedClients = [];
+         
+         document.querySelectorAll(".client-cb").forEach(cb => {
+            if (cb.checked) {
+              const idx = parseInt(cb.getAttribute("data-idx"), 10);
+              selectedClients.push(uniqueClientsFetched[idx]);
+            }
+         });
+
+         confirmBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Processing...`;
+         confirmBtn.disabled = true;
+
+         try {
+           const res = await fetch("/api/admin/rollover", {
+             method: "POST",
+             headers: {"Content-Type": "application/json"},
+             body: JSON.stringify({ new_term: newTerm, clients: selectedClients })
+           });
+           
+           const data = await res.json();
+           if (data.success) {
+              alert("Term changed and clients carried forward successfully!");
+              window.location.reload();
+           } else {
+              alert("Error: " + data.error);
+              confirmBtn.innerHTML = "Confirm & Change Term";
+              confirmBtn.disabled = false;
+           }
+         } catch (e) {
+           alert("Network error.");
+           confirmBtn.innerHTML = "Confirm & Change Term";
+           confirmBtn.disabled = false;
+         }
+      });
+
       // Initially load the user management view
-      window.onload = () => {
-        // Identify as admin so view pages can show delete buttons
+      window.onload = async () => {
         window.isAdmin = true;
+        await fetchCurrentTerm();
         navigate(
           "/admin/users",
           "User Management",

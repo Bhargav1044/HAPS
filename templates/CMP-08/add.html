@@ -167,22 +167,34 @@
 </style>
 
 <script>
-  (function () {
-    const quarters = [
-      "Apr - Jun 2026",
-      "Jul - Sep 2026",
-      "Oct - Dec 2026",
-      "Jan - Mar 2027",
-    ];
-
+  (async function () {
     const start = document.getElementById("startQuarter");
     const end = document.getElementById("endQuarter");
     const form = document.getElementById("cmpForm");
     const message = document.getElementById("cmpAddMessage");
 
-    // fill dropdowns
-    start.innerHTML = `<option disabled selected>Select Quarter</option>`;
-    end.innerHTML = `<option disabled selected>Select Quarter</option>`;
+    let quarters = [];
+
+    try {
+      const res = await fetch("/api/settings/term");
+      const data = await res.json();
+      const term = data.term || "2025-26";
+      const parts = term.split("-");
+      const y1 = parseInt(parts[0], 10);
+      const y2 = parts[1].length === 2 ? 2000 + parseInt(parts[1], 10) : parseInt(parts[1], 10);
+
+      quarters = [
+        `Apr - Jun ${y1}`,
+        `Jul - Sep ${y1}`,
+        `Oct - Dec ${y1}`,
+        `Jan - Mar ${y2}`,
+      ];
+    } catch (e) {
+      quarters = ["Apr - Jun 2026", "Jul - Sep 2026", "Oct - Dec 2026", "Jan - Mar 2027"];
+    }
+
+    start.innerHTML = `<option disabled selected value="">Select Quarter</option>`;
+    end.innerHTML = `<option disabled selected value="">Select Quarter</option>`;
 
     quarters.forEach((q) => {
       start.innerHTML += `<option value="${q}">${q}</option>`;
@@ -192,9 +204,7 @@
     // keep end quarter within selected range
     start.addEventListener("change", () => {
       const startIndex = quarters.indexOf(start.value);
-
-      end.innerHTML = `<option disabled selected>Select Quarter</option>`;
-
+      end.innerHTML = `<option disabled selected value="">Select Quarter</option>`;
       quarters.forEach((q, i) => {
         if (i >= startIndex) {
           end.innerHTML += `<option value="${q}">${q}</option>`;
@@ -202,9 +212,9 @@
       });
     });
 
-    function getQuartersInRange(startQuarter, endQuarter) {
-      const startIndex = quarters.indexOf(startQuarter);
-      const endIndex = quarters.indexOf(endQuarter);
+    function getQuartersInRange(startVal, endVal) {
+      const startIndex = quarters.indexOf(startVal);
+      const endIndex = quarters.indexOf(endVal);
       if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
         return [];
       }

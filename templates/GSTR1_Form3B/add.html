@@ -69,18 +69,18 @@
         </div>
 
         <div class="form-group">
-          <label>Start Month</label>
-          <div class="input-box dropdown">
+          <label>Start Month (Pick any date)</label>
+          <div class="input-box">
             <i class="fas fa-play"></i>
-            <select id="startMonth" required></select>
+            <input type="date" id="startMonth" required style="color-scheme: dark; padding-left: 35px;" />
           </div>
         </div>
 
         <div class="form-group">
-          <label>End Month</label>
-          <div class="input-box dropdown">
+          <label>End Month (Pick any date)</label>
+          <div class="input-box">
             <i class="fas fa-stop"></i>
-            <select id="endMonth" required></select>
+            <input type="date" id="endMonth" required style="color-scheme: dark; padding-left: 35px;" />
           </div>
         </div>
       </div>
@@ -253,23 +253,7 @@
 </style>
 
 <script>
-  (function () {
-    const months = [
-      "Mar 2026",
-      "Apr 2026",
-      "May 2026",
-      "Jun 2026",
-      "Jul 2026",
-      "Aug 2026",
-      "Sep 2026",
-      "Oct 2026",
-      "Nov 2026",
-      "Dec 2026",
-      "Jan 2027",
-      "Feb 2027",
-      "Mar 2027",
-    ];
-
+  (async function () {
     const periodicity = document.getElementById("periodicity");
     const start = document.getElementById("startMonth");
     const end = document.getElementById("endMonth");
@@ -277,6 +261,26 @@
     const message = document.getElementById("formMessage");
 
     if (!periodicity || !start || !end || !form) return;
+
+    // Fetch and restrict to Term
+    try {
+      const res = await fetch("/api/settings/term");
+      const data = await res.json();
+      const term = data.term || "2025-26";
+      const parts = term.split("-");
+      const y1 = parseInt(parts[0], 10);
+      const y2 = parts[1].length === 2 ? 2000 + parseInt(parts[1], 10) : parseInt(parts[1], 10);
+      
+      const minDate = `${y1}-04-01`;
+      const maxDate = `${y2}-03-31`;
+      
+      start.setAttribute("min", minDate);
+      start.setAttribute("max", maxDate);
+      end.setAttribute("min", minDate);
+      end.setAttribute("max", maxDate);
+    } catch (e) {
+      console.error("Failed to fetch term limits");
+    }
 
     // 🔥 EMAIL FORMAT FUNCTION (ONLY ADDITION)
     function formatEmail(email) {
@@ -289,36 +293,33 @@
       return email;
     }
 
-    // default
-    start.innerHTML = `<option disabled selected>Select Month</option>`;
-    end.innerHTML = `<option disabled selected>Select Month</option>`;
-
-    // fill
-    months.forEach((m) => {
-      start.innerHTML += `<option value="${m}">${m}</option>`;
-      end.innerHTML += `<option value="${m}">${m}</option>`;
-    });
-
-    // filter end month
     start.addEventListener("change", () => {
-      const startIndex = months.indexOf(start.value);
-
-      end.innerHTML = `<option disabled selected>Select Month</option>`;
-
-      months.forEach((m, i) => {
-        if (i >= startIndex) {
-          end.innerHTML += `<option value="${m}">${m}</option>`;
-        }
-      });
+      // Ensure end month is at least start month
+      if (start.value && (!end.value || end.value < start.value)) {
+        end.value = start.value;
+        end.min = start.value;
+      } else if (start.value) {
+        end.min = start.value;
+      }
     });
 
-    function getMonthsInRange(startMonth, endMonth) {
-      const startIndex = months.indexOf(startMonth);
-      const endIndex = months.indexOf(endMonth);
-      if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
-        return [];
+    function getMonthsInRange(startVal, endVal) {
+      if (!startVal || !endVal) return [];
+      const d1 = new Date(startVal);
+      const d2 = new Date(endVal);
+      if (d2 < d1) return [];
+      
+      const result = [];
+      let current = new Date(d1.getFullYear(), d1.getMonth(), 1);
+      const endMarker = new Date(d2.getFullYear(), d2.getMonth(), 1);
+      
+      const monthsStr = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      
+      while (current <= endMarker) {
+        result.push(`${monthsStr[current.getMonth()]} ${current.getFullYear()}`);
+        current.setMonth(current.getMonth() + 1);
       }
-      return months.slice(startIndex, endIndex + 1);
+      return result;
     }
 
     form.addEventListener("submit", async (e) => {

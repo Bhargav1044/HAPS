@@ -11,7 +11,7 @@
     </div>
   </div>
 
-  <!-- FILTER BAR (SINGLE LINE UI) -->
+  <!-- FILTER BAR -->
   <div class="filter-bar">
     <!-- ARN FILTER -->
     <div class="filter-group">
@@ -28,12 +28,19 @@
       <label>Quarter</label>
       <select id="quarterFilter">
         <option value="">All</option>
-        <option>Apr - Jun 2026</option>
-        <option>Jul - Sep 2026</option>
-        <option>Oct - Dec 2026</option>
-        <option>Jan - Mar 2027</option>
       </select>
     </div>
+  </div>
+
+  <!-- EXPORT / IMPORT BAR -->
+  <div class="action-bar">
+    <button class="action-btn export-btn" onclick="exportToExcel()">
+      <i class="fas fa-file-excel"></i> Export to Excel
+    </button>
+    <button class="action-btn import-btn" onclick="document.getElementById('importFile').click()">
+      <i class="fas fa-upload"></i> Import Excel
+    </button>
+    <input type="file" id="importFile" accept=".xlsx,.xls" style="display:none" onchange="importFromExcel(event)" />
   </div>
 
   <!-- TABLE -->
@@ -96,7 +103,6 @@
     cursor: pointer;
   }
 
-  /* 🔥 NEW ANIMATION */
   #refreshBtn i {
     transition: transform 0.5s ease;
   }
@@ -106,15 +112,10 @@
   }
 
   @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
 
-  /* FILTER BAR */
   .filter-bar {
     display: flex;
     gap: 20px;
@@ -134,6 +135,40 @@
     border-radius: 8px;
     border: 1px solid #cbd5e1;
     min-width: 160px;
+  }
+
+  /* ACTION BAR */
+  .action-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .action-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: opacity 0.2s;
+  }
+
+  .action-btn:hover {
+    opacity: 0.85;
+  }
+
+  .export-btn {
+    background: #16a34a;
+    color: white;
+  }
+
+  .import-btn {
+    background: #2563eb;
+    color: white;
   }
 
   .table-container {
@@ -179,9 +214,38 @@
   }
 </style>
 
+<!-- SheetJS for Excel export/import -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+
 <script>
   (function () {
+    // Dynamic FY quarters
+    function generateQuarters() {
+      const now = new Date();
+      let fy = now.getFullYear();
+      if (now.getMonth() < 3) fy--; // Jan-Mar → previous FY
+      return [
+        `Apr - Jun ${fy}`,
+        `Jul - Sep ${fy}`,
+        `Oct - Dec ${fy}`,
+        `Jan - Mar ${fy + 1}`,
+      ];
+    }
+
+    const quarters = generateQuarters();
     let data = [];
+
+    // Populate quarter dropdown dynamically
+    const quarterFilter = document.getElementById("quarterFilter");
+    quarters.forEach(q => {
+      quarterFilter.innerHTML += `<option value="${q}">${q}</option>`;
+    });
+
+    // Quarter sort helper
+    function quarterIndex(q) {
+      const idx = quarters.indexOf(q);
+      return idx === -1 ? 999 : idx;
+    }
 
     function formatEmail(email) {
       if (!email) return "";
@@ -224,7 +288,7 @@
       const body = document.getElementById("tableBody");
 
       if (rows.length === 0) {
-        body.innerHTML = `<tr><td colspan="11">No Data Found</td></tr>`;
+        body.innerHTML = `<tr><td colspan="12">No Data Found</td></tr>`;
         return;
       }
 
@@ -255,6 +319,12 @@
     }
 
     async function loadRows() {
+      // Add Action column for admin
+      if (window.isAdmin && !document.getElementById("actionTh")) {
+        const theadTr = document.querySelector("table thead tr");
+        if (theadTr) theadTr.innerHTML += '<th id="actionTh">Action</th>';
+      }
+
       const response = await fetch("/api/cmp/list");
       const result = await response.json();
 
@@ -273,13 +343,81 @@
         date: row.cmp08_filing_date || "",
       }));
 
+      // Sort ascending by quarter
+      data.sort((a, b) => quarterIndex(a.quarter) - quarterIndex(b.quarter));
+
       renderTable(data);
     }
 
+    // Delete (admin only)
+    window.deleteRecord = async function (id, type) {
+      if (!confirm("Are you sure you want to delete this record?")) return;
+
+      const res = await fetch(`/api/admin/data/delete_${type}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+
+      if (res.ok) loadRows();
+      else alert("Delete failed");
+    };
+
+    // Export to Excel
+    window.exportToExcel = function () {
+      const table = document.querySelector(".table-container table");
+      const wb = XLSX.utils.table_to_book(table, { sheet: "CMP08" });
+      XLSX.writeFile(wb, "CMP08_Data.xlsx");
+    };
+
+    // Import from Excel
+    window.importFromExcel = async function (event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async function (e) {
+        try {
+          const wb = XLSX.read(e.target.result, { type: "array", cellDates: true });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(ws);
+
+          let imported = 0;
+          for (const row of rows) {
+            const payload = {
+              name: row["Name"] || row["name"] || "",
+              gst_no: (row["GST No"] || row["gst_no"] || "").toString().toUpperCase(),
+              user_id: row["ID"] || row["user_id"] || "",
+              password: row["Password"] || row["password"] || "",
+              concern_person: row["Concern Person"] || row["concern_person"] || "",
+              contact_no: row["Contact No"] || row["contact_no"] || "",
+              email_id: row["Email ID"] || row["email_id"] || "",
+              periodicity: row["Periodicity"] || row["periodicity"] || "Quarterly",
+              quarter: row["Quarter"] || row["quarter"] || "",
+            };
+
+            if (!payload.name || !payload.gst_no) continue;
+
+            const res = await fetch("/api/cmp/add", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+            if (res.ok) imported++;
+          }
+
+          alert(`Successfully imported ${imported} rows`);
+          event.target.value = "";
+          loadRows();
+        } catch (err) {
+          alert("Import failed: " + err.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    };
+
     window.resetFilters = async function () {
       const btn = document.getElementById("refreshBtn");
-
-      // 🔥 START ANIMATION
       btn.classList.add("loading");
 
       document.getElementById("searchInput").value = "";
@@ -288,21 +426,14 @@
 
       await loadRows();
 
-      // 🔥 STOP ANIMATION
       setTimeout(() => {
         btn.classList.remove("loading");
       }, 600);
     };
 
-    document
-      .getElementById("searchInput")
-      .addEventListener("input", applyFilters);
-    document
-      .getElementById("quarterFilter")
-      .addEventListener("change", applyFilters);
-    document
-      .getElementById("arnFilter")
-      .addEventListener("change", applyFilters);
+    document.getElementById("searchInput").addEventListener("input", applyFilters);
+    document.getElementById("quarterFilter").addEventListener("change", applyFilters);
+    document.getElementById("arnFilter").addEventListener("change", applyFilters);
 
     loadRows();
   })();
