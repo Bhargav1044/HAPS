@@ -139,45 +139,62 @@
       </div>
     </div>
 
-    <!-- UNFILLED ENTRIES SECTION -->
+    <!--Select Below SECTION -->
     <div class="unfilled-section" id="unfilledSection">
       <h3 style="color:#e2e8f0; margin-bottom:14px; font-size:16px;">
-        <i class="fas fa-exclamation-triangle" style="color:#f59e0b;"></i> Unfilled Entries
+        <i class="fas fa-exclamation-triangle" style="color:#f59e0b;"></i>Select Below
       </h3>
 
       <!-- Month Filter for GSTR1/Form3B -->
       <div style="margin-bottom:14px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
         <label style="color:#94a3b8; font-size:13px;">Filter by Month:</label>
-        <select id="unfilledMonthFilter" style="padding:6px 12px; border-radius:8px; background:#27334d; color:white; border:1px solid #475569; font-size:13px; cursor:pointer;">
+        <select id="unfilledMonthFilter"
+          style="padding:6px 12px; border-radius:8px; background:#27334d; color:white; border:1px solid #475569; font-size:13px; cursor:pointer;">
           <option value="">All Months</option>
         </select>
       </div>
 
       <div class="unfilled-btns" style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px;">
-        <button class="unfilled-btn" data-type="gstr1" onclick="showUnfilled('gstr1', this)" style="background:linear-gradient(135deg,#3b82f6,#2563eb); color:white; border:none; padding:12px 20px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px; transition:all 0.2s;">
+        <button class="unfilled-btn" data-type="gstr1" onclick="showUnfilled('gstr1', this)"
+          style="background:linear-gradient(135deg,#3b82f6,#2563eb); color:white; border:none; padding:12px 20px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px; transition:all 0.2s;">
           <i class="fas fa-file"></i> GSTR1
-          <span class="remaining-badge" id="badge-gstr1" style="background:rgba(255,255,255,0.25); padding:2px 8px; border-radius:12px; font-size:11px;">Remaining: —</span>
+          <span class="remaining-badge" id="badge-gstr1"
+            style="background:rgba(255,255,255,0.25); padding:2px 8px; border-radius:12px; font-size:11px;">Remaining:
+            —</span>
         </button>
-        <button class="unfilled-btn" data-type="form3b" onclick="showUnfilled('form3b', this)" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8); color:white; border:none; padding:12px 20px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px; transition:all 0.2s;">
+        <button class="unfilled-btn" data-type="form3b" onclick="showUnfilled('form3b', this)"
+          style="background:linear-gradient(135deg,#3b82f6,#1d4ed8); color:white; border:none; padding:12px 20px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px; transition:all 0.2s;">
           <i class="fas fa-file-alt"></i> Form 3B
-          <span class="remaining-badge" id="badge-form3b" style="background:rgba(255,255,255,0.25); padding:2px 8px; border-radius:12px; font-size:11px;">Remaining: —</span>
+          <span class="remaining-badge" id="badge-form3b"
+            style="background:rgba(255,255,255,0.25); padding:2px 8px; border-radius:12px; font-size:11px;">Remaining:
+            —</span>
         </button>
-        <button class="unfilled-btn" data-type="gstr9" onclick="showUnfilled('gstr9', this)" style="background:linear-gradient(135deg,#10b981,#059669); color:white; border:none; padding:12px 20px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px; transition:all 0.2s;">
+        <button class="unfilled-btn" data-type="gstr9" onclick="showUnfilled('gstr9', this)"
+          style="background:linear-gradient(135deg,#10b981,#059669); color:white; border:none; padding:12px 20px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px; transition:all 0.2s;">
           <i class="fas fa-users"></i> GSTR9 &amp; 9C
-          <span class="remaining-badge" id="badge-gstr9" style="background:rgba(255,255,255,0.25); padding:2px 8px; border-radius:12px; font-size:11px;">Remaining: —</span>
+          <span class="remaining-badge" id="badge-gstr9"
+            style="background:rgba(255,255,255,0.25); padding:2px 8px; border-radius:12px; font-size:11px;">Remaining:
+            —</span>
         </button>
-        <button class="unfilled-btn" data-type="cmp08" onclick="showUnfilled('cmp08', this)" style="background:linear-gradient(135deg,#f59e0b,#d97706); color:white; border:none; padding:12px 20px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px; transition:all 0.2s;">
+        <button class="unfilled-btn" data-type="cmp08" onclick="showUnfilled('cmp08', this)"
+          style="background:linear-gradient(135deg,#f59e0b,#d97706); color:white; border:none; padding:12px 20px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px; transition:all 0.2s;">
           <i class="fas fa-calendar"></i> CMP-08
-          <span class="remaining-badge" id="badge-cmp08" style="background:rgba(255,255,255,0.25); padding:2px 8px; border-radius:12px; font-size:11px;">Remaining: —</span>
+          <span class="remaining-badge" id="badge-cmp08"
+            style="background:rgba(255,255,255,0.25); padding:2px 8px; border-radius:12px; font-size:11px;">Remaining:
+            —</span>
         </button>
-        <button class="unfilled-btn" data-type="gstr4" onclick="showUnfilled('gstr4', this)" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed); color:white; border:none; padding:12px 20px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px; transition:all 0.2s;">
+        <button class="unfilled-btn" data-type="gstr4" onclick="showUnfilled('gstr4', this)"
+          style="background:linear-gradient(135deg,#8b5cf6,#7c3aed); color:white; border:none; padding:12px 20px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px; transition:all 0.2s;">
           <i class="fas fa-check"></i> GSTR4
-          <span class="remaining-badge" id="badge-gstr4" style="background:rgba(255,255,255,0.25); padding:2px 8px; border-radius:12px; font-size:11px;">Remaining: —</span>
+          <span class="remaining-badge" id="badge-gstr4"
+            style="background:rgba(255,255,255,0.25); padding:2px 8px; border-radius:12px; font-size:11px;">Remaining:
+            —</span>
         </button>
       </div>
 
       <!-- Unfilled detail table area -->
-      <div id="unfilledDetail" style="display:none; background:rgba(255,255,255,0.08); border-radius:12px; padding:16px; max-height:400px; overflow:auto;">
+      <div id="unfilledDetail"
+        style="display:none; background:rgba(255,255,255,0.08); border-radius:12px; padding:16px; max-height:400px; overflow:auto;">
       </div>
     </div>
 
@@ -238,7 +255,7 @@
       }
     }
 
-    // ======= UNFILLED ENTRIES LOGIC =======
+    // =======Select Below LOGIC =======
     let unfilledData = {}; // cached API response
     let currentUnfilledType = null;
 
@@ -358,7 +375,7 @@
 
       const typeLabels = { gstr1: 'GSTR1', form3b: 'Form 3B', gstr9: 'GSTR9 & 9C', cmp08: 'CMP-08', gstr4: 'GSTR4' };
       detail.innerHTML = `
-        <h4 style="color:#f1f5f9; margin-bottom:10px;">${typeLabels[type]} — Unfilled Entries (${rows.length})</h4>
+        <h4 style="color:#f1f5f9; margin-bottom:10px;">${typeLabels[type]} —Select Below (${rows.length})</h4>
         <table style="width:100%; border-collapse:collapse;">
           <thead><tr style="background:rgba(255,255,255,0.1);">${headers}</tr></thead>
           <tbody>${bodyRows}</tbody>
