@@ -1,0 +1,226 @@
+<!-- Admin Dashboard Content (loaded via AJAX into formArea) -->
+<div class="cards" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:20px; margin-bottom:30px;">
+  <div class="card blue" style="background:linear-gradient(135deg,#3b82f6,#2563eb); color:white; padding:24px; border-radius:14px; display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <p style="font-size:14px; opacity:0.85; margin:0;">GSTR1 & Form 3B</p>
+      <h2 id="adminDashGstr1" style="font-size:28px; margin:6px 0 0 0;">0</h2>
+    </div>
+    <i class="fas fa-file" style="font-size:28px; opacity:0.5;"></i>
+  </div>
+
+  <div class="card green" style="background:linear-gradient(135deg,#10b981,#059669); color:white; padding:24px; border-radius:14px; display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <p style="font-size:14px; opacity:0.85; margin:0;">GSTR9 & 9C</p>
+      <h2 id="adminDashGstr9" style="font-size:28px; margin:6px 0 0 0;">0</h2>
+    </div>
+    <i class="fas fa-users" style="font-size:28px; opacity:0.5;"></i>
+  </div>
+
+  <div class="card orange" style="background:linear-gradient(135deg,#f59e0b,#d97706); color:white; padding:24px; border-radius:14px; display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <p style="font-size:14px; opacity:0.85; margin:0;">CMP-08</p>
+      <h2 id="adminDashCmp" style="font-size:28px; margin:6px 0 0 0;">0</h2>
+    </div>
+    <i class="fas fa-calendar" style="font-size:28px; opacity:0.5;"></i>
+  </div>
+
+  <div class="card purple" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed); color:white; padding:24px; border-radius:14px; display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <p style="font-size:14px; opacity:0.85; margin:0;">GSTR4</p>
+      <h2 id="adminDashGstr4" style="font-size:28px; margin:6px 0 0 0;">0</h2>
+    </div>
+    <i class="fas fa-check" style="font-size:28px; opacity:0.5;"></i>
+  </div>
+</div>
+
+<!-- UNFILLED ENTRIES SECTION -->
+<div id="adminUnfilledSection">
+  <h3 style="color:#e2e8f0; margin-bottom:14px; font-size:16px;">
+    <i class="fas fa-exclamation-triangle" style="color:#f59e0b;"></i> Unfilled Entries
+  </h3>
+
+  <!-- Month Filter -->
+  <div style="margin-bottom:14px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+    <label style="color:#94a3b8; font-size:13px;">Filter by Month:</label>
+    <select id="adminUnfilledMonthFilter" style="padding:6px 12px; border-radius:8px; background:#27334d; color:white; border:1px solid #475569; font-size:13px; cursor:pointer;">
+      <option value="">All Months</option>
+    </select>
+  </div>
+
+  <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px;">
+    <button class="admin-unfilled-btn" data-type="gstr1" onclick="showAdminUnfilled('gstr1', this)" style="background:linear-gradient(135deg,#3b82f6,#2563eb); color:white; border:none; padding:12px 20px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px; transition:all 0.2s;">
+      <i class="fas fa-file"></i> GSTR1
+      <span id="admin-badge-gstr1" style="background:rgba(255,255,255,0.25); padding:2px 8px; border-radius:12px; font-size:11px;">Remaining: —</span>
+    </button>
+    <button class="admin-unfilled-btn" data-type="form3b" onclick="showAdminUnfilled('form3b', this)" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8); color:white; border:none; padding:12px 20px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px; transition:all 0.2s;">
+      <i class="fas fa-file-alt"></i> Form 3B
+      <span id="admin-badge-form3b" style="background:rgba(255,255,255,0.25); padding:2px 8px; border-radius:12px; font-size:11px;">Remaining: —</span>
+    </button>
+    <button class="admin-unfilled-btn" data-type="gstr9" onclick="showAdminUnfilled('gstr9', this)" style="background:linear-gradient(135deg,#10b981,#059669); color:white; border:none; padding:12px 20px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px; transition:all 0.2s;">
+      <i class="fas fa-users"></i> GSTR9 &amp; 9C
+      <span id="admin-badge-gstr9" style="background:rgba(255,255,255,0.25); padding:2px 8px; border-radius:12px; font-size:11px;">Remaining: —</span>
+    </button>
+    <button class="admin-unfilled-btn" data-type="cmp08" onclick="showAdminUnfilled('cmp08', this)" style="background:linear-gradient(135deg,#f59e0b,#d97706); color:white; border:none; padding:12px 20px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px; transition:all 0.2s;">
+      <i class="fas fa-calendar"></i> CMP-08
+      <span id="admin-badge-cmp08" style="background:rgba(255,255,255,0.25); padding:2px 8px; border-radius:12px; font-size:11px;">Remaining: —</span>
+    </button>
+    <button class="admin-unfilled-btn" data-type="gstr4" onclick="showAdminUnfilled('gstr4', this)" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed); color:white; border:none; padding:12px 20px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px; transition:all 0.2s;">
+      <i class="fas fa-check"></i> GSTR4
+      <span id="admin-badge-gstr4" style="background:rgba(255,255,255,0.25); padding:2px 8px; border-radius:12px; font-size:11px;">Remaining: —</span>
+    </button>
+  </div>
+
+  <!-- Unfilled detail table area -->
+  <div id="adminUnfilledDetail" style="display:none; background:rgba(255,255,255,0.08); border-radius:12px; padding:16px; max-height:400px; overflow:auto;">
+  </div>
+</div>
+
+<div style="color:#94a3b8; text-align:center; margin-top:30px;">
+  <h2 style="color:white; margin-bottom:8px;">Welcome, Admin 👋</h2>
+  <p>Select an option from the sidebar to get started</p>
+</div>
+
+<script>
+  (async function () {
+    // Load stat card counts
+    try {
+      const response = await fetch("/api/dashboard-counts");
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          document.getElementById("adminDashGstr1").textContent = data.gstr1_form3b ?? 0;
+          document.getElementById("adminDashGstr9").textContent = data.gstr9_9c ?? 0;
+          document.getElementById("adminDashCmp").textContent = data.cmp08 ?? 0;
+          document.getElementById("adminDashGstr4").textContent = data.gstr4 ?? 0;
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load admin dashboard counts", e);
+    }
+
+    // Load unfilled entries
+    let adminUnfilledData = {};
+    let adminCurrentType = null;
+
+    try {
+      const res = await fetch("/api/dashboard/unfilled");
+      const data = await res.json();
+      if (data.success) {
+        adminUnfilledData = data;
+
+        document.getElementById("admin-badge-gstr1").textContent = `Remaining: ${data.gstr1.count}`;
+        document.getElementById("admin-badge-form3b").textContent = `Remaining: ${data.form3b.count}`;
+        document.getElementById("admin-badge-gstr9").textContent = `Remaining: ${data.gstr9.count}`;
+        document.getElementById("admin-badge-cmp08").textContent = `Remaining: ${data.cmp08.count}`;
+        document.getElementById("admin-badge-gstr4").textContent = `Remaining: ${data.gstr4.count}`;
+
+        // Populate month filter
+        const monthSet = new Set();
+        (data.gstr1.data || []).concat(data.form3b.data || []).forEach(r => {
+          if (r.month) monthSet.add(r.month);
+        });
+        const monthFilter = document.getElementById("adminUnfilledMonthFilter");
+        monthFilter.innerHTML = '<option value="">All Months</option>';
+        [...monthSet].sort().forEach(m => {
+          monthFilter.innerHTML += `<option value="${m}">${m}</option>`;
+        });
+      }
+    } catch (e) {
+      console.error("Failed to load unfilled counts", e);
+    }
+
+    // Show unfilled table function
+    window.showAdminUnfilled = function(type, btnEl) {
+      document.querySelectorAll('.admin-unfilled-btn').forEach(b => b.style.opacity = '0.6');
+      if (btnEl) btnEl.style.opacity = '1';
+      adminCurrentType = type;
+
+      const selectedMonth = document.getElementById("adminUnfilledMonthFilter").value;
+      let rows = (adminUnfilledData[type] || {}).data || [];
+
+      if (selectedMonth && (type === 'gstr1' || type === 'form3b')) {
+        rows = rows.filter(r => r.month === selectedMonth);
+      }
+      if (selectedMonth && type === 'cmp08') {
+        rows = rows.filter(r => (r.quarter || '').includes(selectedMonth));
+      }
+
+      const detail = document.getElementById("adminUnfilledDetail");
+      detail.style.display = "block";
+
+      if (rows.length === 0) {
+        detail.innerHTML = `<p style="color:#94a3b8; text-align:center;">🎉 All entries are filled for this category!</p>`;
+        document.getElementById(`admin-badge-${type}`).textContent = `Remaining: 0`;
+        return;
+      }
+
+      document.getElementById(`admin-badge-${type}`).textContent = `Remaining: ${rows.length}`;
+
+      let headers = '';
+      let bodyRows = '';
+
+      if (type === 'gstr1') {
+        headers = '<th>Name</th><th>GST No</th><th>Month</th><th>GSTR1 ARN</th><th>GSTR1 Date</th>';
+        bodyRows = rows.map(r => `<tr>
+          <td>${r.name || '-'}</td><td>${r.gst_no || '-'}</td><td>${r.month || '-'}</td>
+          <td><span style="background:#e11d48;color:white;padding:2px 8px;border-radius:6px;font-size:12px;">NOT FILLED</span></td>
+          <td>${r.gstr1_filing_date || '-'}</td></tr>`).join('');
+      } else if (type === 'form3b') {
+        headers = '<th>Name</th><th>GST No</th><th>Month</th><th>Form 3B ARN</th><th>Form 3B Date</th>';
+        bodyRows = rows.map(r => `<tr>
+          <td>${r.name || '-'}</td><td>${r.gst_no || '-'}</td><td>${r.month || '-'}</td>
+          <td><span style="background:#e11d48;color:white;padding:2px 8px;border-radius:6px;font-size:12px;">NOT FILLED</span></td>
+          <td>${r.form3b_filing_date || '-'}</td></tr>`).join('');
+      } else if (type === 'gstr9') {
+        headers = '<th>Name</th><th>GST No</th><th>GSTR9 ARN</th><th>GSTR9C ARN</th>';
+        bodyRows = rows.map(r => `<tr>
+          <td>${r.name || '-'}</td><td>${r.gst_no || '-'}</td>
+          <td>${r.gstr9_arn_no ? r.gstr9_arn_no : '<span style="background:#e11d48;color:white;padding:2px 8px;border-radius:6px;font-size:12px;">NOT FILLED</span>'}</td>
+          <td>${r.gstr9c_arn_no ? r.gstr9c_arn_no : '<span style="background:#e11d48;color:white;padding:2px 8px;border-radius:6px;font-size:12px;">NOT FILLED</span>'}</td></tr>`).join('');
+      } else if (type === 'cmp08') {
+        headers = '<th>Name</th><th>GST No</th><th>Quarter</th><th>CMP-08 ARN</th><th>CMP-08 Date</th>';
+        bodyRows = rows.map(r => `<tr>
+          <td>${r.name || '-'}</td><td>${r.gst_no || '-'}</td><td>${r.quarter || '-'}</td>
+          <td><span style="background:#e11d48;color:white;padding:2px 8px;border-radius:6px;font-size:12px;">NOT FILLED</span></td>
+          <td>${r.cmp08_filing_date || '-'}</td></tr>`).join('');
+      } else if (type === 'gstr4') {
+        headers = '<th>Name</th><th>GST No</th><th>GSTR4 ARN</th><th>GSTR4 Date</th>';
+        bodyRows = rows.map(r => `<tr>
+          <td>${r.name || '-'}</td><td>${r.gst_no || '-'}</td>
+          <td><span style="background:#e11d48;color:white;padding:2px 8px;border-radius:6px;font-size:12px;">NOT FILLED</span></td>
+          <td>${r.gstr4_filing_date || '-'}</td></tr>`).join('');
+      }
+
+      const typeLabels = { gstr1: 'GSTR1', form3b: 'Form 3B', gstr9: 'GSTR9 & 9C', cmp08: 'CMP-08', gstr4: 'GSTR4' };
+      detail.innerHTML = `
+        <h4 style="color:#f1f5f9; margin-bottom:10px;">${typeLabels[type]} — Unfilled Entries (${rows.length})</h4>
+        <table style="width:100%; border-collapse:collapse;">
+          <thead><tr style="background:rgba(255,255,255,0.1);">${headers}</tr></thead>
+          <tbody>${bodyRows}</tbody>
+        </table>
+      `;
+      detail.querySelectorAll('th, td').forEach(el => {
+        el.style.padding = '10px 12px';
+        el.style.textAlign = 'left';
+        el.style.borderBottom = '1px solid rgba(255,255,255,0.08)';
+        el.style.color = '#e2e8f0';
+        el.style.fontSize = '13px';
+      });
+      detail.querySelectorAll('th').forEach(el => {
+        el.style.color = '#94a3b8';
+        el.style.fontWeight = '600';
+        el.style.fontSize = '12px';
+        el.style.textTransform = 'uppercase';
+        el.style.letterSpacing = '0.5px';
+      });
+    };
+
+    // Month filter change
+    document.getElementById('adminUnfilledMonthFilter')?.addEventListener('change', () => {
+      if (adminCurrentType) {
+        const activeBtn = document.querySelector(`.admin-unfilled-btn[data-type="${adminCurrentType}"]`);
+        window.showAdminUnfilled(adminCurrentType, activeBtn);
+      }
+    });
+  })();
+</script>

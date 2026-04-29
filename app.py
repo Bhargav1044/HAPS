@@ -101,6 +101,10 @@ def admin_page():
 def admin_users_page():
     return render_template("admin_users.html")
 
+@app.route("/admin/dashboard")
+def admin_dashboard_page():
+    return render_template("admin_dashboard.html")
+
 @app.route("/user-dashboard")
 def user_dashboard():
     return render_template("user_dashboard.html")
@@ -556,6 +560,42 @@ def dashboard_counts():
             "gstr9_9c": len(gstr9.data or []),
             "cmp08": len(cmp08.data or []),
             "gstr4": len(gstr4.data or [])
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/dashboard/unfilled", methods=["GET"])
+def dashboard_unfilled():
+    """Return all entries with missing ARN for each GST category (current term)."""
+    try:
+        term = get_current_term()
+
+        # GSTR1: rows where gstr1_arn_no is null
+        gstr1_all = supabase.table("gstr1_form3b").select("*").eq("term", term).execute()
+        gstr1_unfilled = [r for r in (gstr1_all.data or []) if not r.get("gstr1_arn_no")]
+
+        # Form 3B: rows where form3b_arn_no is null
+        form3b_unfilled = [r for r in (gstr1_all.data or []) if not r.get("form3b_arn_no")]
+
+        # GSTR9 & 9C: rows where gstr9_arn_no OR gstr9c_arn_no is null
+        gstr9_all = supabase.table("gstr9_9c").select("*").eq("term", term).execute()
+        gstr9_unfilled = [r for r in (gstr9_all.data or []) if not r.get("gstr9_arn_no") or not r.get("gstr9c_arn_no")]
+
+        # CMP-08: rows where cmp08_arn_no is null
+        cmp_all = supabase.table("cmp08").select("*").eq("term", term).execute()
+        cmp_unfilled = [r for r in (cmp_all.data or []) if not r.get("cmp08_arn_no")]
+
+        # GSTR4: rows where gstr4_arn_no is null
+        gstr4_all = supabase.table("gstr4").select("*").eq("term", term).execute()
+        gstr4_unfilled = [r for r in (gstr4_all.data or []) if not r.get("gstr4_arn_no")]
+
+        return jsonify({
+            "success": True,
+            "gstr1":   {"count": len(gstr1_unfilled),  "data": gstr1_unfilled},
+            "form3b":  {"count": len(form3b_unfilled),  "data": form3b_unfilled},
+            "gstr9":   {"count": len(gstr9_unfilled),   "data": gstr9_unfilled},
+            "cmp08":   {"count": len(cmp_unfilled),     "data": cmp_unfilled},
+            "gstr4":   {"count": len(gstr4_unfilled),   "data": gstr4_unfilled}
         })
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
