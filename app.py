@@ -45,10 +45,10 @@ def add_header(response):
 # ================= LOGIN CREDENTIALS =================
 
 ADMIN_CREDENTIALS = [
-    {"email": "admin@company.com", "password": "company123"}
+    {"email": "amit@cahaps.in", "password": "Bajarang@$%*2026"}
 ]
 
-USER_PORTAL = {"email": "user@company.com", "password": "company123"}
+USER_PORTAL = {"email": "accounts@cahaps.in", "password": "ARNForHaps@2026"}
 
 
 # ================= HELPERS =================
@@ -439,6 +439,11 @@ def gstr1_update_profile():
         if month:
             query = query.eq("month", month)
         response = query.execute()
+
+        # ── AUTO-LINK: cascade profile update to gstr9_9c ──
+        gstr9_payload = {k: v for k, v in payload.items() if k not in ["month", "updated_at"]}
+        supabase.table("gstr9_9c").update(gstr9_payload).eq("gst_no", gst_no).execute()
+
         return jsonify({"success": True, "data": response.data or []})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -469,6 +474,11 @@ def cmp_update_profile():
         if quarter:
             query = query.eq("quarter", quarter)
         response = query.execute()
+
+        # ── AUTO-LINK: cascade profile update to gstr4 ──
+        gstr4_payload = {k: v for k, v in payload.items() if k not in ["quarter", "updated_at"]}
+        supabase.table("gstr4").update(gstr4_payload).eq("gst_no", gst_no).execute()
+
         return jsonify({"success": True, "data": response.data or []})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -645,6 +655,16 @@ def import_gstr1():
             "term": get_current_term()
         }
         response = supabase.table("gstr1_form3b").insert(payload).execute()
+        
+        # ── AUTO-LINK: upsert consolidated row into gstr9_9c ──
+        term = get_current_term()
+        existing = supabase.table("gstr9_9c").select("id").eq("gst_no", payload["gst_no"]).eq("term", term).execute()
+        gstr9_payload = {k: v for k, v in payload.items() if k != "month"}
+        if existing.data:
+            supabase.table("gstr9_9c").update(gstr9_payload).eq("gst_no", payload["gst_no"]).eq("term", term).execute()
+        else:
+            supabase.table("gstr9_9c").insert(gstr9_payload).execute()
+
         return jsonify({"success": True, "data": response.data})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -666,6 +686,16 @@ def import_cmp():
             "term": get_current_term()
         }
         response = supabase.table("cmp08").insert(payload).execute()
+        
+        # ── AUTO-LINK: upsert consolidated row into gstr4 ──
+        term = get_current_term()
+        existing = supabase.table("gstr4").select("id").eq("gst_no", payload["gst_no"]).eq("term", term).execute()
+        gstr4_payload = {k: v for k, v in payload.items() if k != "quarter"}
+        if existing.data:
+            supabase.table("gstr4").update(gstr4_payload).eq("gst_no", payload["gst_no"]).eq("term", term).execute()
+        else:
+            supabase.table("gstr4").insert(gstr4_payload).execute()
+
         return jsonify({"success": True, "data": response.data})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500

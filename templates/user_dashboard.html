@@ -89,7 +89,7 @@
   <div class="main">
     <!-- TOPBAR -->
     <div class="topbar" style="align-items: center;">
-      <h1 id="pageTitle">Dashboard</h1>
+      <h1 id="pageTitle" style="color:#000000;">Dashboard</h1>
 
       <div class="top-actions" style="display: flex; gap: 15px; align-items: center;">
         <select id="globalTerm"
@@ -141,13 +141,13 @@
 
     <!--Select Below SECTION -->
     <div class="unfilled-section" id="unfilledSection">
-      <h3 style="color:#e2e8f0; margin-bottom:14px; font-size:16px;">
+      <h3 style="color:#000000; margin-bottom:14px; font-size:16px;">
         <i class="fas fa-exclamation-triangle" style="color:#f59e0b;"></i>Select Below
       </h3>
 
       <!-- Month Filter for GSTR1/Form3B -->
       <div style="margin-bottom:14px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-        <label style="color:#94a3b8; font-size:13px;">Filter by Month:</label>
+        <label style="color:#000000; font-size:13px;">Filter by Month:</label>
         <select id="unfilledMonthFilter"
           style="padding:6px 12px; border-radius:8px; background:#27334d; color:white; border:1px solid #475569; font-size:13px; cursor:pointer;">
           <option value="">All Months</option>
@@ -200,8 +200,8 @@
 
     <!-- CONTENT -->
     <div id="formArea">
-      <h2>Welcome 👋</h2>
-      <p>Select an option from sidebar</p>
+      <h2 style="color:#000000;">Welcome 👋</h2>
+      <p style="color:#000000;">Select an option from sidebar</p>
     </div>
   </div>
 
@@ -375,23 +375,25 @@
 
       const typeLabels = { gstr1: 'GSTR1', form3b: 'Form 3B', gstr9: 'GSTR9 & 9C', cmp08: 'CMP-08', gstr4: 'GSTR4' };
       detail.innerHTML = `
-        <h4 style="color:#f1f5f9; margin-bottom:10px;">${typeLabels[type]} —Select Below (${rows.length})</h4>
-        <table style="width:100%; border-collapse:collapse;">
-          <thead><tr style="background:rgba(255,255,255,0.1);">${headers}</tr></thead>
+        <h4 style="color:#000000; margin-bottom:10px;">${typeLabels[type]} —Select Below (${rows.length})</h4>
+        <table style="width:100%; border-collapse:collapse; border-radius:8px; overflow:hidden; background:#eff6ff; border: 1px solid #bfdbfe;">
+          <thead><tr style="background:#bfdbfe;">${headers}</tr></thead>
           <tbody>${bodyRows}</tbody>
         </table>
       `;
       // Style table cells
       detail.querySelectorAll('th, td').forEach(el => {
-        el.style.padding = '10px 12px';
+        el.style.padding = '12px 14px';
         el.style.textAlign = 'left';
-        el.style.borderBottom = '1px solid rgba(255,255,255,0.08)';
-        el.style.color = '#e2e8f0';
+        el.style.borderBottom = '1px solid #bfdbfe';
         el.style.fontSize = '13px';
       });
+      detail.querySelectorAll('td').forEach(el => {
+        el.style.color = '#000000';
+      });
       detail.querySelectorAll('th').forEach(el => {
-        el.style.color = '#94a3b8';
-        el.style.fontWeight = '600';
+        el.style.color = '#0f172a'; // Near black for readability
+        el.style.fontWeight = '700';
         el.style.fontSize = '12px';
         el.style.textTransform = 'uppercase';
         el.style.letterSpacing = '0.5px';
@@ -475,7 +477,7 @@
 
       // Reset form area to welcome message
       const formArea = document.getElementById("formArea");
-      formArea.innerHTML = `<h2>Welcome 👋</h2><p>Select an option from sidebar</p>`;
+      formArea.innerHTML = `<h2 style="color:#000000;">Welcome 👋</h2><p style="color:#000000;">Select an option from sidebar</p>`;
 
       // Reload dashboard counts and unfilled
       loadDashboardCounts();
