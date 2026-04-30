@@ -64,6 +64,7 @@
             <i class="fas fa-calendar"></i>
             <select id="periodicity" required>
               <option value="Monthly" selected>Monthly</option>
+              <option value="Quarterly">Quarterly</option>
             </select>
           </div>
         </div>
@@ -259,8 +260,31 @@
     const end = document.getElementById("endMonth");
     const form = document.getElementById("gstrForm");
     const message = document.getElementById("formMessage");
+    const gstInput = document.getElementById("gst");
 
     if (!periodicity || !start || !end || !form) return;
+
+    // ── AUTO-FILL on GST number entry ──
+    gstInput.addEventListener("blur", async function () {
+      const gst = gstInput.value.trim().toUpperCase();
+      if (!/^[0-9A-Z]{15}$/.test(gst)) return;
+      gstInput.value = gst;
+      try {
+        const res = await fetch(`/api/gstr1/by-gst?gst_no=${encodeURIComponent(gst)}`);
+        const result = await res.json();
+        const row = result.data && result.data[0];
+        if (!row) return;
+        document.getElementById("name").value = row.name || "";
+        document.getElementById("userId").value = row.user_id || "";
+        document.getElementById("password").value = row.password || "";
+        document.getElementById("concernPerson").value = row.concern_person || "";
+        document.getElementById("phone").value = row.contact_no || "";
+        document.getElementById("email").value = (row.email_id || "").toLowerCase();
+        if (row.periodicity) periodicity.value = row.periodicity;
+      } catch (e) {
+        console.error("Auto-fill failed", e);
+      }
+    });
 
     // Fetch and restrict to Term
     try {

@@ -265,14 +265,39 @@ def add_gstr1():
         else:
             clean_months = []
 
+        # Quarter-end months: only these need manual ARN entry for Quarterly
+        quarter_end = {"Jun", "Sep", "Dec", "Mar"}
+
         if clean_months:
-            rows = [{**base_payload, "month": month} for month in clean_months]
+            rows = []
+            for month in clean_months:
+                row = {**base_payload, "month": month}
+                # Auto-fill NA for non-quarter-end months when Quarterly
+                if base_payload.get("periodicity") == "Quarterly":
+                    month_prefix = month.split(" ")[0] if " " in month else month
+                    if month_prefix not in quarter_end:
+                        row["gstr1_arn_no"] = "NA"
+                        row["gstr1_filing_date"] = "NA"
+                        row["form3b_arn_no"] = "NA"
+                        row["form3b_filing_date"] = "NA"
+            
+                rows.append(row)
             response = supabase.table("gstr1_form3b").insert(rows).execute()
         else:
-            response = supabase.table("gstr1_form3b").insert({
+            single_row = {
                 **base_payload,
                 "month": _clean(data.get("month")) # type: ignore
-            }).execute()
+            }
+            # Auto-fill NA for single month if Quarterly and not quarter-end
+            if base_payload.get("periodicity") == "Quarterly":
+                m = _clean(data.get("month")) or ""
+                month_prefix = m.split(" ")[0] if " " in m else m
+                if month_prefix not in quarter_end:
+                    single_row["gstr1_arn_no"] = "NA"
+                    single_row["gstr1_filing_date"] = "NA"
+                    single_row["form3b_arn_no"] = "NA"
+                    single_row["form3b_filing_date"] = "NA"
+            response = supabase.table("gstr1_form3b").insert(single_row).execute()
 
         # ── AUTO-LINK: upsert consolidated row into gstr9_9c ──
         gstr9_payload = {
