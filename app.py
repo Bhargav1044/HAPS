@@ -10,7 +10,7 @@ import json
 ssl_context = ssl.create_default_context(cafile=certifi.where())
 
 # ================= CONFIG / TERM SETTINGS =================
-CONFIG_FILE = "config.json"
+CONFIG_FILE = "/tmp/config.json"
 
 def get_current_term():
     if not os.path.exists(CONFIG_FILE):
