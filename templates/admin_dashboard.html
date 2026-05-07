@@ -178,6 +178,14 @@
 
       document.getElementById(`admin-badge-${type}`).textContent = `Remaining: ${rows.length}`;
 
+      // Sort rows by month ascending (Apr→Mar FY order)
+      const monthOrder = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
+      rows.sort((a, b) => {
+        const mA = (a.month || '').split(' ')[0];
+        const mB = (b.month || '').split(' ')[0];
+        return monthOrder.indexOf(mA) - monthOrder.indexOf(mB);
+      });
+
       let headers = '';
       let bodyRows = '';
 

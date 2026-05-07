@@ -10,17 +10,22 @@ import json
 ssl_context = ssl.create_default_context(cafile=certifi.where())
 
 # ================= CONFIG / TERM SETTINGS =================
-CONFIG_FILE = "/tmp/config.json"
+# Use /tmp on Vercel (Linux), local file on Windows
+import platform
+if platform.system() == "Windows":
+    CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
+else:
+    CONFIG_FILE = "/tmp/config.json"
 
 def get_current_term():
     if not os.path.exists(CONFIG_FILE):
-        return "2025-26"
+        return "2026-27"
     try:
         with open(CONFIG_FILE, "r") as f:
             data = json.load(f)
-            return data.get("current_term", "2025-26")
+            return data.get("current_term", "2026-27")
     except:
-        return "2025-26"
+        return "2026-27"
 
 def set_current_term(term):
     with open(CONFIG_FILE, "w") as f:
@@ -155,12 +160,15 @@ def rollover_clients():
         quarters = [
             f"Apr - Jun {y1}", f"Jul - Sep {y1}", f"Oct - Dec {y1}", f"Jan - Mar {y2}"
         ]
+        quarter_end = {"Jun", "Sep", "Dec", "Mar"}
 
         for client in clients:
             gst = client.get("gst_no")
             if not gst: continue
             
             p = client.get("periodicity", "Monthly")
+            # Category override from frontend: "gstr1" or "cmp08"
+            category = client.get("category", "gstr1" if p == "Monthly" else "cmp08")
             base = {
                 "name": client.get("name"), "gst_no": gst, "user_id": client.get("user_id"),
                 "password": client.get("password"), "concern_person": client.get("concern_person"),
@@ -168,17 +176,41 @@ def rollover_clients():
                 "periodicity": p, "term": new_term
             }
 
-            if p == "Monthly":
-                gstr1_rows = [{**base, "month": m} for m in months]
+            if category == "gstr1":
+                # Build monthly rows; auto-NA GSTR1 ARN for quarterly non-quarter-end months
+                gstr1_rows = []
+                for m in months:
+                    row = {**base, "month": m}
+                    if p == "Quarterly":
+                        mp = m.split(" ")[0]
+                        if mp not in quarter_end:
+                            row["gstr1_arn_no"] = "NA"
+                            row["gstr1_filing_date"] = "NA"
+                    gstr1_rows.append(row)
                 supabase.table("gstr1_form3b").insert(gstr1_rows).execute()
                 supabase.table("gstr9_9c").insert(base).execute()
-            elif p == "Quarterly":
+            elif category == "cmp08":
                 cmp_rows = [{**base, "quarter": q} for q in quarters]
                 supabase.table("cmp08").insert(cmp_rows).execute()
                 supabase.table("gstr4").insert(base).execute()
 
         set_current_term(new_term)
         return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/term/has-data", methods=["GET"])
+def term_has_data():
+    """Check if any table already has data for the given term."""
+    term = request.args.get("term")
+    if not term:
+        return jsonify({"success": False, "error": "Missing term"}), 400
+    try:
+        for table in ["gstr1_form3b", "gstr9_9c", "cmp08", "gstr4"]:
+            res = supabase.table(table).select("id").eq("term", term).limit(1).execute()
+            if res.data and len(res.data) > 0:
+                return jsonify({"success": True, "has_data": True})
+        return jsonify({"success": True, "has_data": False})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -278,8 +310,6 @@ def add_gstr1():
                     if month_prefix not in quarter_end:
                         row["gstr1_arn_no"] = "NA"
                         row["gstr1_filing_date"] = "NA"
-                        row["form3b_arn_no"] = "NA"
-                        row["form3b_filing_date"] = "NA"
             
                 rows.append(row)
             response = supabase.table("gstr1_form3b").insert(rows).execute()
@@ -295,8 +325,6 @@ def add_gstr1():
                 if month_prefix not in quarter_end:
                     single_row["gstr1_arn_no"] = "NA"
                     single_row["gstr1_filing_date"] = "NA"
-                    single_row["form3b_arn_no"] = "NA"
-                    single_row["form3b_filing_date"] = "NA"
             response = supabase.table("gstr1_form3b").insert(single_row).execute()
 
         # ── AUTO-LINK: upsert consolidated row into gstr9_9c ──
@@ -584,10 +612,11 @@ def cmp_update_arn():
 @app.route("/api/dashboard-counts", methods=["GET"])
 def dashboard_counts():
     try:
-        gstr1 = supabase.table("gstr1_form3b").select("id").execute()
-        gstr9 = supabase.table("gstr9_9c").select("id").execute()
-        cmp08 = supabase.table("cmp08").select("id").execute()
-        gstr4 = supabase.table("gstr4").select("id").execute()
+        term = get_current_term()
+        gstr1 = supabase.table("gstr1_form3b").select("id").eq("term", term).execute()
+        gstr9 = supabase.table("gstr9_9c").select("id").eq("term", term).execute()
+        cmp08 = supabase.table("cmp08").select("id").eq("term", term).execute()
+        gstr4 = supabase.table("gstr4").select("id").eq("term", term).execute()
 
         return jsonify({
             "success": True,
