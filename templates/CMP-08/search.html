@@ -74,16 +74,6 @@
           </div>
         </div>
 
-        <!-- PERIODICITY -->
-        <div class="form-group">
-          <label>Periodicity</label>
-          <div class="input-box dropdown">
-            <i class="fas fa-calendar"></i>
-            <select id="periodicity" required>
-              <option value="Quarterly" selected>Quarterly</option>
-            </select>
-          </div>
-        </div>
       </div>
 
       <button class="form-btn" type="submit">Update</button>
@@ -277,9 +267,7 @@
               .getElementById("concernPerson")
               .value.trim(),
             contact_no: document.getElementById("contactNo").value.trim(),
-            email_id: email, // ✅ use cleaned email
-            periodicity: document.getElementById("periodicity").value,
-            quarter: "",
+            email_id: email,
           }),
         });
 
@@ -326,8 +314,7 @@
       document.getElementById("emailId").value = (
         row.email_id || ""
       ).toLowerCase(); // ✅ ensure lowercase
-      document.getElementById("periodicity").value =
-        row.periodicity || "Quarterly";
+
     };
   })();
 </script>

@@ -465,7 +465,6 @@ def gstr1_update_profile():
     try:
         data = _body()
         gst_no = _clean_gst(data.get("gst_no"))
-        month = _clean(data.get("month"))
         if not gst_no:
             return jsonify({"success": False, "error": "gst_no is required"}), 400
 
@@ -476,18 +475,14 @@ def gstr1_update_profile():
             "concern_person": _clean(data.get("concern_person")),
             "contact_no": _clean(data.get("contact_no")),
             "email_id": _clean(data.get("email_id")),
-            "periodicity": _clean(data.get("periodicity")),
-            "month": month,
             "updated_at": datetime.utcnow().isoformat()
         }
 
-        query = supabase.table("gstr1_form3b").update(payload).eq("gst_no", gst_no)
-        if month:
-            query = query.eq("month", month)
-        response = query.execute()
+        # Update ALL rows matching this GST number (across all months)
+        response = supabase.table("gstr1_form3b").update(payload).eq("gst_no", gst_no).execute()
 
         # ── AUTO-LINK: cascade profile update to gstr9_9c ──
-        gstr9_payload = {k: v for k, v in payload.items() if k not in ["month", "updated_at"]}
+        gstr9_payload = {k: v for k, v in payload.items() if k != "updated_at"}
         supabase.table("gstr9_9c").update(gstr9_payload).eq("gst_no", gst_no).execute()
 
         return jsonify({"success": True, "data": response.data or []})
@@ -500,7 +495,6 @@ def cmp_update_profile():
     try:
         data = _body()
         gst_no = _clean_gst(data.get("gst_no"))
-        quarter = _clean(data.get("quarter"))
         if not gst_no:
             return jsonify({"success": False, "error": "gst_no is required"}), 400
 
@@ -511,18 +505,14 @@ def cmp_update_profile():
             "concern_person": _clean(data.get("concern_person")),
             "contact_no": _clean(data.get("contact_no")),
             "email_id": _clean(data.get("email_id")),
-            "periodicity": _clean(data.get("periodicity")),
-            "quarter": quarter,
             "updated_at": datetime.utcnow().isoformat()
         }
 
-        query = supabase.table("cmp08").update(payload).eq("gst_no", gst_no)
-        if quarter:
-            query = query.eq("quarter", quarter)
-        response = query.execute()
+        # Update ALL rows matching this GST number (across all quarters)
+        response = supabase.table("cmp08").update(payload).eq("gst_no", gst_no).execute()
 
         # ── AUTO-LINK: cascade profile update to gstr4 ──
-        gstr4_payload = {k: v for k, v in payload.items() if k not in ["quarter", "updated_at"]}
+        gstr4_payload = {k: v for k, v in payload.items() if k != "updated_at"}
         supabase.table("gstr4").update(gstr4_payload).eq("gst_no", gst_no).execute()
 
         return jsonify({"success": True, "data": response.data or []})
