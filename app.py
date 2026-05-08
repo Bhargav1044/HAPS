@@ -1,13 +1,9 @@
 from flask import Flask, render_template, request, jsonify # type: ignore
-from supabase import create_client # type: ignore
+from db import create_client # type: ignore
 from werkzeug.security import generate_password_hash, check_password_hash # type: ignore
 import os
 from datetime import datetime
-import certifi
-import ssl
 import json
-
-ssl_context = ssl.create_default_context(cafile=certifi.where())
 
 # ================= CONFIG / TERM SETTINGS =================
 # Use /tmp on Vercel (Linux), local file on Windows
@@ -31,12 +27,9 @@ def set_current_term(term):
     with open(CONFIG_FILE, "w") as f:
         json.dump({"current_term": term}, f)
 
-# ================= SUPABASE CONFIG =================
+# ================= POSTGRESQL CONFIG =================
 
-SUPABASE_URL = "https://fxzzdmpusmhroyxjzfwk.supabase.co"
-SUPABASE_KEY ="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4enpkbXB1c21ocm95eGp6ZndrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjAyOTc3MiwiZXhwIjoyMDg3NjA1NzcyfQ.OPDu7-jmaFc4vD16zDR8BcsoJjYWRiCOfmFdKtP3ZYg"
-
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+supabase = create_client()  # connects to local PostgreSQL (see db.py for config)
 
 app = Flask(__name__)
 
@@ -1050,4 +1043,4 @@ def edit_user():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
