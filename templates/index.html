@@ -292,7 +292,8 @@
   <script>
     let currentUser = null;
 
-    function logoutIndex() {
+    async function logoutIndex() {
+      await fetch("/api/logout", { method: "POST" });
       localStorage.clear();
       sessionStorage.clear();
       window.location.replace('/login');

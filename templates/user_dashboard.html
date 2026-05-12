@@ -557,7 +557,8 @@
       loadUnfilledCounts();
     }
 
-    document.getElementById("logoutBtn")?.addEventListener("click", () => {
+    document.getElementById("logoutBtn")?.addEventListener("click", async () => {
+      await fetch("/api/logout", { method: "POST" });
       localStorage.clear();
       sessionStorage.clear();
       window.location.replace("/login");

@@ -1,8 +1,8 @@
-from flask import Flask, render_template, request, jsonify, session # type: ignore
+from flask import Flask, render_template, request, jsonify, session, redirect # type: ignore
 from db import create_client # type: ignore
 from werkzeug.security import generate_password_hash, check_password_hash # type: ignore
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 
 # ================= CONFIG / TERM SETTINGS =================
@@ -45,6 +45,9 @@ supabase = create_client()  # connects to local PostgreSQL (see db.py for config
 app = Flask(__name__)
 app.secret_key = "haps-secret-key-2026-do-not-share"  # Required for Flask session
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
+# Make sessions permanent (survive browser close) with 30-day lifetime
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
 
 @app.after_request
 def add_header(response):
@@ -106,6 +109,8 @@ def signup_page():
 
 @app.route("/admin")
 def admin_page():
+    if session.get("role") != "admin":
+        return redirect("/login")
     return render_template("admin.html")
 
 @app.route("/admin/users")
@@ -118,6 +123,8 @@ def admin_dashboard_page():
 
 @app.route("/user-dashboard")
 def user_dashboard():
+    if not session.get("role"):
+        return redirect("/login")
     return render_template("user_dashboard.html")
 
 @app.route("/api/settings/term", methods=["GET", "POST"])
@@ -890,12 +897,21 @@ def first_login():
     password = data["password"]
 
     if any(a["email"] == email and a["password"] == password for a in ADMIN_CREDENTIALS):
+        session.permanent = True
+        session["role"] = "admin"
         return jsonify({"role": "admin"})
 
     if email == USER_PORTAL["email"] and password == USER_PORTAL["password"]:
+        session.permanent = True
+        session["role"] = "user"
         return jsonify({"role": "user"})
 
     return jsonify({"error": "Invalid credentials"}), 401
+
+@app.route("/api/logout", methods=["POST"])
+def logout():
+    session.clear()
+    return jsonify({"success": True})
 
 
 # ================= USER =================
