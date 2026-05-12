@@ -269,16 +269,27 @@
         document.getElementById("badge-cmp08").textContent = `Remaining: ${data.cmp08.count}`;
         document.getElementById("badge-gstr4").textContent = `Remaining: ${data.gstr4.count}`;
 
-        // Populate month filter from gstr1 data (all unique months)
-        const monthSet = new Set();
-        (data.gstr1.data || []).concat(data.form3b.data || []).forEach(r => {
-          if (r.month) monthSet.add(r.month);
-        });
+        // Populate month filter with ALL 12 FY months (Apr→Mar) from term
         const monthFilter = document.getElementById("unfilledMonthFilter");
         monthFilter.innerHTML = '<option value="">All Months</option>';
-        [...monthSet].sort().forEach(m => {
-          monthFilter.innerHTML += `<option value="${m}">${m}</option>`;
-        });
+
+        try {
+          const termRes = await fetch("/api/settings/term");
+          const termData = await termRes.json();
+          const term = termData.term || "2026-27";
+          const parts = term.split("-");
+          const y1 = parseInt(parts[0], 10);
+          const y2 = parts[1].length === 2 ? 2000 + parseInt(parts[1], 10) : parseInt(parts[1], 10);
+          const fyMonths = [
+            `Apr ${y1}`, `May ${y1}`, `Jun ${y1}`, `Jul ${y1}`, `Aug ${y1}`, `Sep ${y1}`,
+            `Oct ${y1}`, `Nov ${y1}`, `Dec ${y1}`, `Jan ${y2}`, `Feb ${y2}`, `Mar ${y2}`
+          ];
+          fyMonths.forEach(m => {
+            monthFilter.innerHTML += `<option value="${m}">${m}</option>`;
+          });
+        } catch (e) {
+          console.error("Failed to build month filter", e);
+        }
 
         // Hide detail table on fresh load
         document.getElementById("unfilledDetail").style.display = "none";
@@ -286,6 +297,74 @@
       } catch (e) {
         console.error("Failed to load unfilled counts", e);
       }
+    }
+
+    // Show ALL entries for a month (no category filter)
+    function showAllForMonth(selectedMonth) {
+      const detail = document.getElementById("unfilledDetail");
+      detail.style.display = "block";
+
+      // De-highlight all category buttons
+      document.querySelectorAll('.unfilled-btn').forEach(b => b.style.opacity = '1');
+      currentUnfilledType = null;
+
+      // Collect all GSTR1 entries for this month
+      let gstr1Rows = (unfilledData.all_gstr1 || []).filter(r => r.month === selectedMonth);
+
+      // Sort by name
+      gstr1Rows.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+      if (gstr1Rows.length === 0) {
+        detail.innerHTML = `<p style="color:#94a3b8; text-align:center;">No entries found for ${selectedMonth}</p>`;
+        return;
+      }
+
+      const headers = '<th>Name</th><th>GST No</th><th>Month</th><th>GSTR1 ARN</th><th>GSTR1 Date</th><th>Form 3B ARN</th><th>Form 3B Date</th>';
+      const bodyRows = gstr1Rows.map(r => {
+        const gstr1Arn = r.gstr1_arn_no
+          ? `<span style="color:#166534;font-weight:600;">${r.gstr1_arn_no}</span>`
+          : '<span style="background:#e11d48;color:white;padding:2px 8px;border-radius:6px;font-size:12px;">NOT FILLED</span>';
+        const form3bArn = r.form3b_arn_no
+          ? `<span style="color:#166534;font-weight:600;">${r.form3b_arn_no}</span>`
+          : '<span style="background:#e11d48;color:white;padding:2px 8px;border-radius:6px;font-size:12px;">NOT FILLED</span>';
+        return `<tr>
+          <td>${r.name || '-'}</td>
+          <td>${r.gst_no || '-'}</td>
+          <td>${r.month || '-'}</td>
+          <td>${gstr1Arn}</td>
+          <td>${r.gstr1_filing_date || '-'}</td>
+          <td>${form3bArn}</td>
+          <td>${r.form3b_filing_date || '-'}</td>
+        </tr>`;
+      }).join('');
+
+      detail.innerHTML = `
+        <h4 style="color:#000000; margin-bottom:10px;">All Entries — ${selectedMonth} (${gstr1Rows.length})</h4>
+        <table style="width:100%; border-collapse:collapse; border-radius:8px; overflow:hidden; background:#eff6ff; border: 1px solid #bfdbfe;">
+          <thead><tr style="background:#bfdbfe;">${headers}</tr></thead>
+          <tbody>${bodyRows}</tbody>
+        </table>
+      `;
+      _styleDetailTable(detail);
+    }
+
+    function _styleDetailTable(detail) {
+      detail.querySelectorAll('th, td').forEach(el => {
+        el.style.padding = '12px 14px';
+        el.style.textAlign = 'left';
+        el.style.borderBottom = '1px solid #bfdbfe';
+        el.style.fontSize = '13px';
+      });
+      detail.querySelectorAll('td').forEach(el => {
+        el.style.color = '#000000';
+      });
+      detail.querySelectorAll('th').forEach(el => {
+        el.style.color = '#0f172a';
+        el.style.fontWeight = '700';
+        el.style.fontSize = '12px';
+        el.style.textTransform = 'uppercase';
+        el.style.letterSpacing = '0.5px';
+      });
     }
 
     function showUnfilled(type, btnEl) {
@@ -312,7 +391,6 @@
 
       if (rows.length === 0) {
         detail.innerHTML = `<p style="color:#94a3b8; text-align:center;">🎉 All entries are filled for this category!</p>`;
-        // Update badge for filtered count
         document.getElementById(`badge-${type}`).textContent = `Remaining: 0`;
         return;
       }
@@ -378,36 +456,28 @@
 
       const typeLabels = { gstr1: 'GSTR1', form3b: 'Form 3B', gstr9: 'GSTR9 & 9C', cmp08: 'CMP-08', gstr4: 'GSTR4' };
       detail.innerHTML = `
-        <h4 style="color:#000000; margin-bottom:10px;">${typeLabels[type]} —Select Below (${rows.length})</h4>
+        <h4 style="color:#000000; margin-bottom:10px;">${typeLabels[type]} — Remaining (${rows.length})</h4>
         <table style="width:100%; border-collapse:collapse; border-radius:8px; overflow:hidden; background:#eff6ff; border: 1px solid #bfdbfe;">
           <thead><tr style="background:#bfdbfe;">${headers}</tr></thead>
           <tbody>${bodyRows}</tbody>
         </table>
       `;
-      // Style table cells
-      detail.querySelectorAll('th, td').forEach(el => {
-        el.style.padding = '12px 14px';
-        el.style.textAlign = 'left';
-        el.style.borderBottom = '1px solid #bfdbfe';
-        el.style.fontSize = '13px';
-      });
-      detail.querySelectorAll('td').forEach(el => {
-        el.style.color = '#000000';
-      });
-      detail.querySelectorAll('th').forEach(el => {
-        el.style.color = '#0f172a'; // Near black for readability
-        el.style.fontWeight = '700';
-        el.style.fontSize = '12px';
-        el.style.textTransform = 'uppercase';
-        el.style.letterSpacing = '0.5px';
-      });
+      _styleDetailTable(detail);
     }
 
     // Month filter change handler
     document.getElementById('unfilledMonthFilter')?.addEventListener('change', () => {
+      const selectedMonth = document.getElementById("unfilledMonthFilter").value;
       if (currentUnfilledType) {
+        // A category button is active — re-filter unfilled for that category
         const activeBtn = document.querySelector(`.unfilled-btn[data-type="${currentUnfilledType}"]`);
         showUnfilled(currentUnfilledType, activeBtn);
+      } else if (selectedMonth) {
+        // No category button selected — show ALL entries for this month
+        showAllForMonth(selectedMonth);
+      } else {
+        // "All Months" selected with no category — hide detail
+        document.getElementById("unfilledDetail").style.display = "none";
       }
     });
 

@@ -192,31 +192,28 @@
 </style>
 
 <script>
-  (function () {
-    const months = [
-      "Mar 2026",
-      "Apr 2026",
-      "May 2026",
-      "Jun 2026",
-      "Jul 2026",
-      "Aug 2026",
-      "Sep 2026",
-      "Oct 2026",
-      "Nov 2026",
-      "Dec 2026",
-      "Jan 2027",
-      "Feb 2027",
-      "Mar 2027",
-    ];
-
+  (async function () {
     const monthList = document.getElementById("monthList");
-
     if (!monthList) return;
 
-    // default
-    monthList.innerHTML = `<option disabled selected>Select Month</option>`;
+    // Fetch term and build months dynamically (Apr → Mar)
+    let months = [];
+    try {
+      const res = await fetch("/api/settings/term");
+      const data = await res.json();
+      const term = data.term || "2026-27";
+      const parts = term.split("-");
+      const y1 = parseInt(parts[0], 10);
+      const y2 = parts[1].length === 2 ? 2000 + parseInt(parts[1], 10) : parseInt(parts[1], 10);
+      months = [
+        `Apr ${y1}`, `May ${y1}`, `Jun ${y1}`, `Jul ${y1}`, `Aug ${y1}`, `Sep ${y1}`,
+        `Oct ${y1}`, `Nov ${y1}`, `Dec ${y1}`, `Jan ${y2}`, `Feb ${y2}`, `Mar ${y2}`
+      ];
+    } catch (e) {
+      months = ["Apr 2026","May 2026","Jun 2026","Jul 2026","Aug 2026","Sep 2026","Oct 2026","Nov 2026","Dec 2026","Jan 2027","Feb 2027","Mar 2027"];
+    }
 
-    // populate
+    monthList.innerHTML = `<option disabled selected>Select Month</option>`;
     months.forEach((m) => {
       monthList.innerHTML += `<option value="${m}">${m}</option>`;
     });

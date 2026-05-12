@@ -133,7 +133,7 @@
 </style>
 
 <script>
-  (function () {
+  (async function () {
     const quarter = document.getElementById("quarter");
     const arnSelect = document.getElementById("arnSelect");
     const manualArnBox = document.getElementById("manualArnBox");
@@ -141,12 +141,22 @@
     const form = document.getElementById("cmpArnForm");
     const message = document.getElementById("cmpArnMessage");
 
-    [
-      "Apr - Jun 2026",
-      "Jul - Sep 2026",
-      "Oct - Dec 2026",
-      "Jan - Mar 2027",
-    ].forEach((q) => {
+    // Fetch term and build quarters dynamically
+    let quarters = [];
+    try {
+      const res = await fetch("/api/settings/term");
+      const data = await res.json();
+      const term = data.term || "2026-27";
+      const parts = term.split("-");
+      const y1 = parseInt(parts[0], 10);
+      const y2 = parts[1].length === 2 ? 2000 + parseInt(parts[1], 10) : parseInt(parts[1], 10);
+      quarters = [`Apr - Jun ${y1}`, `Jul - Sep ${y1}`, `Oct - Dec ${y1}`, `Jan - Mar ${y2}`];
+    } catch (e) {
+      quarters = ["Apr - Jun 2026", "Jul - Sep 2026", "Oct - Dec 2026", "Jan - Mar 2027"];
+    }
+
+    quarter.innerHTML = `<option disabled selected>Select Quarter</option>`;
+    quarters.forEach((q) => {
       const option = document.createElement("option");
       option.value = q;
       option.textContent = q;

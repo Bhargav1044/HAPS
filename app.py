@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify # type: ignore
+from flask import Flask, render_template, request, jsonify, session # type: ignore
 from db import create_client # type: ignore
 from werkzeug.security import generate_password_hash, check_password_hash # type: ignore
 import os
@@ -6,14 +6,16 @@ from datetime import datetime
 import json
 
 # ================= CONFIG / TERM SETTINGS =================
-# Use /tmp on Vercel (Linux), local file on Windows
+# Default term is stored in config.json as a fallback.
+# Each login session gets its OWN independent term via Flask session.
 import platform
 if platform.system() == "Windows":
     CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
 else:
     CONFIG_FILE = "/tmp/config.json"
 
-def get_current_term():
+def _get_default_term():
+    """Read the global default term from config.json (used for new sessions)."""
     if not os.path.exists(CONFIG_FILE):
         return "2026-27"
     try:
@@ -23,15 +25,26 @@ def get_current_term():
     except:
         return "2026-27"
 
-def set_current_term(term):
+def _set_default_term(term):
+    """Update the global default term in config.json."""
     with open(CONFIG_FILE, "w") as f:
         json.dump({"current_term": term}, f)
+
+def get_current_term():
+    """Get the term for the CURRENT session (per-user, independent)."""
+    return session.get("current_term", _get_default_term())
+
+def set_current_term(term):
+    """Set the term for the CURRENT session only (does NOT affect other users)."""
+    session["current_term"] = term
 
 # ================= POSTGRESQL CONFIG =================
 
 supabase = create_client()  # connects to local PostgreSQL (see db.py for config)
 
 app = Flask(__name__)
+app.secret_key = "haps-secret-key-2026-do-not-share"  # Required for Flask session
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 @app.after_request
 def add_header(response):
@@ -111,7 +124,11 @@ def user_dashboard():
 def manage_term():
     if request.method == "POST":
         data = _body()
-        set_current_term(data.get("term"))
+        term = data.get("term")
+        set_current_term(term)  # Only changes THIS session's term
+        # Also update global default if coming from admin rollover
+        if data.get("set_default"):
+            _set_default_term(term)
         return jsonify({"success": True})
     return jsonify({"success": True, "term": get_current_term()})
 
@@ -188,6 +205,7 @@ def rollover_clients():
                 supabase.table("gstr4").insert(base).execute()
 
         set_current_term(new_term)
+        _set_default_term(new_term)  # Rollover also updates the global default
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -293,6 +311,22 @@ def add_gstr1():
         # Quarter-end months: only these need manual ARN entry for Quarterly
         quarter_end = {"Jun", "Sep", "Dec", "Mar"}
 
+        # ── DUPLICATE CHECK: gst_no + month + term must be unique ──
+        gst_no = base_payload["gst_no"]
+        term = base_payload["term"]
+        months_to_check = clean_months if clean_months else [_clean(data.get("month"))]
+        months_to_check = [m for m in months_to_check if m]  # remove None
+
+        if months_to_check:
+            existing = supabase.table("gstr1_form3b").select("month").eq("gst_no", gst_no).eq("term", term).execute()
+            existing_months = {r["month"] for r in (existing.data or [])}
+            duplicates = [m for m in months_to_check if m in existing_months]
+            if duplicates:
+                return jsonify({
+                    "success": False,
+                    "error": f"GST {gst_no} already has entries for: {', '.join(duplicates)} in term {term}. Delete existing entries first or use Search & Update."
+                }), 400
+
         if clean_months:
             rows = []
             for month in clean_months:
@@ -332,9 +366,9 @@ def add_gstr1():
             "periodicity": base_payload["periodicity"],
             "term": base_payload["term"]
         }
-        existing = supabase.table("gstr9_9c").select("id").eq("gst_no", base_payload["gst_no"]).execute()
+        existing = supabase.table("gstr9_9c").select("id").eq("gst_no", base_payload["gst_no"]).eq("term", term).execute()
         if existing.data:
-            supabase.table("gstr9_9c").update(gstr9_payload).eq("gst_no", base_payload["gst_no"]).execute()
+            supabase.table("gstr9_9c").update(gstr9_payload).eq("gst_no", base_payload["gst_no"]).eq("term", term).execute()
         else:
             supabase.table("gstr9_9c").insert(gstr9_payload).execute()
 
@@ -364,6 +398,22 @@ def add_cmp():
         else:
             clean_quarters = []
 
+        # ── DUPLICATE CHECK: gst_no + quarter + term must be unique ──
+        gst_no = base_payload["gst_no"]
+        term = base_payload["term"]
+        quarters_to_check = clean_quarters if clean_quarters else [_clean(data.get("quarter"))]
+        quarters_to_check = [q for q in quarters_to_check if q]  # remove None
+
+        if quarters_to_check:
+            existing = supabase.table("cmp08").select("quarter").eq("gst_no", gst_no).eq("term", term).execute()
+            existing_quarters = {r["quarter"] for r in (existing.data or [])}
+            duplicates = [q for q in quarters_to_check if q in existing_quarters]
+            if duplicates:
+                return jsonify({
+                    "success": False,
+                    "error": f"GST {gst_no} already has entries for: {', '.join(duplicates)} in term {term}. Delete existing entries first or use Search & Update."
+                }), 400
+
         if clean_quarters:
             rows = [{**base_payload, "quarter": quarter} for quarter in clean_quarters]
             response = supabase.table("cmp08").insert(rows).execute()
@@ -385,9 +435,9 @@ def add_cmp():
             "periodicity": base_payload["periodicity"],
             "term": base_payload["term"]
         }
-        existing = supabase.table("gstr4").select("id").eq("gst_no", base_payload["gst_no"]).execute()
+        existing = supabase.table("gstr4").select("id").eq("gst_no", base_payload["gst_no"]).eq("term", term).execute()
         if existing.data:
-            supabase.table("gstr4").update(gstr4_payload).eq("gst_no", base_payload["gst_no"]).execute()
+            supabase.table("gstr4").update(gstr4_payload).eq("gst_no", base_payload["gst_no"]).eq("term", term).execute()
         else:
             supabase.table("gstr4").insert(gstr4_payload).execute()
 
@@ -529,6 +579,20 @@ def gstr1_update_arn():
         if not gst_no:
             return jsonify({"success": False, "error": "gst_no is required"}), 400
 
+        # ── LOCK CHECK: block updates on auto-filled NA months (quarterly) ──
+        if month:
+            quarter_end = {"Jun", "Sep", "Dec", "Mar"}
+            month_prefix = month.split(" ")[0] if " " in month else month
+            existing = supabase.table("gstr1_form3b").select("periodicity, gstr1_arn_no, gstr1_filing_date").eq("gst_no", gst_no).eq("month", month).execute()
+            if existing.data:
+                row = existing.data[0]
+                if row.get("periodicity") == "Quarterly" and month_prefix not in quarter_end:
+                    if row.get("gstr1_arn_no") == "NA" and row.get("gstr1_filing_date") == "NA":
+                        return jsonify({
+                            "success": False,
+                            "error": f"Cannot update {month} — this is an auto-filled NA entry for a Quarterly client. Only quarter-end months (Jun, Sep, Dec, Mar) can be updated."
+                        }), 400
+
         payload = {
             "gstr1_arn_no": _clean(data.get("arn")),
             "gstr1_filing_date": _clean(data.get("date")),
@@ -552,6 +616,20 @@ def gstr1_update_form3b():
         month = _clean(data.get("month"))
         if not gst_no:
             return jsonify({"success": False, "error": "gst_no is required"}), 400
+
+        # ── LOCK CHECK: block updates on auto-filled NA months (quarterly) ──
+        if month:
+            quarter_end = {"Jun", "Sep", "Dec", "Mar"}
+            month_prefix = month.split(" ")[0] if " " in month else month
+            existing = supabase.table("gstr1_form3b").select("periodicity, gstr1_arn_no, gstr1_filing_date").eq("gst_no", gst_no).eq("month", month).execute()
+            if existing.data:
+                row = existing.data[0]
+                if row.get("periodicity") == "Quarterly" and month_prefix not in quarter_end:
+                    if row.get("gstr1_arn_no") == "NA" and row.get("gstr1_filing_date") == "NA":
+                        return jsonify({
+                            "success": False,
+                            "error": f"Cannot update {month} — this is an auto-filled NA entry for a Quarterly client. Only quarter-end months (Jun, Sep, Dec, Mar) can be updated."
+                        }), 400
 
         payload = {
             "form3b_arn_no": _clean(data.get("arn")),
@@ -613,28 +691,30 @@ def dashboard_counts():
 
 @app.route("/api/dashboard/unfilled", methods=["GET"])
 def dashboard_unfilled():
-    """Return all entries with missing ARN for each GST category (current term)."""
+    """Return all entries AND entries with missing ARN for each GST category (current term)."""
     try:
         term = get_current_term()
 
-        # GSTR1: rows where gstr1_arn_no is null
+        # GSTR1 / Form3B: all rows for this term
         gstr1_all = supabase.table("gstr1_form3b").select("*").eq("term", term).execute()
-        gstr1_unfilled = [r for r in (gstr1_all.data or []) if not r.get("gstr1_arn_no")]
+        gstr1_all_data = gstr1_all.data or []
+        gstr1_unfilled = [r for r in gstr1_all_data if not r.get("gstr1_arn_no")]
+        form3b_unfilled = [r for r in gstr1_all_data if not r.get("form3b_arn_no")]
 
-        # Form 3B: rows where form3b_arn_no is null
-        form3b_unfilled = [r for r in (gstr1_all.data or []) if not r.get("form3b_arn_no")]
-
-        # GSTR9 & 9C: rows where gstr9_arn_no OR gstr9c_arn_no is null
+        # GSTR9 & 9C
         gstr9_all = supabase.table("gstr9_9c").select("*").eq("term", term).execute()
-        gstr9_unfilled = [r for r in (gstr9_all.data or []) if not r.get("gstr9_arn_no") or not r.get("gstr9c_arn_no")]
+        gstr9_all_data = gstr9_all.data or []
+        gstr9_unfilled = [r for r in gstr9_all_data if not r.get("gstr9_arn_no") or not r.get("gstr9c_arn_no")]
 
-        # CMP-08: rows where cmp08_arn_no is null
+        # CMP-08
         cmp_all = supabase.table("cmp08").select("*").eq("term", term).execute()
-        cmp_unfilled = [r for r in (cmp_all.data or []) if not r.get("cmp08_arn_no")]
+        cmp_all_data = cmp_all.data or []
+        cmp_unfilled = [r for r in cmp_all_data if not r.get("cmp08_arn_no")]
 
-        # GSTR4: rows where gstr4_arn_no is null
+        # GSTR4
         gstr4_all = supabase.table("gstr4").select("*").eq("term", term).execute()
-        gstr4_unfilled = [r for r in (gstr4_all.data or []) if not r.get("gstr4_arn_no")]
+        gstr4_all_data = gstr4_all.data or []
+        gstr4_unfilled = [r for r in gstr4_all_data if not r.get("gstr4_arn_no")]
 
         return jsonify({
             "success": True,
@@ -642,7 +722,9 @@ def dashboard_unfilled():
             "form3b":  {"count": len(form3b_unfilled),  "data": form3b_unfilled},
             "gstr9":   {"count": len(gstr9_unfilled),   "data": gstr9_unfilled},
             "cmp08":   {"count": len(cmp_unfilled),     "data": cmp_unfilled},
-            "gstr4":   {"count": len(gstr4_unfilled),   "data": gstr4_unfilled}
+            "gstr4":   {"count": len(gstr4_unfilled),   "data": gstr4_unfilled},
+            "all_gstr1": gstr1_all_data,
+            "all_cmp08": cmp_all_data
         })
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -691,10 +773,16 @@ def import_gstr1():
             "month": _clean(data.get("month")),
             "term": get_current_term()
         }
+
+        # ── DUPLICATE CHECK: skip if gst_no + month + term already exists ──
+        term = payload["term"]
+        existing_row = supabase.table("gstr1_form3b").select("id").eq("gst_no", payload["gst_no"]).eq("month", payload["month"]).eq("term", term).execute()
+        if existing_row.data:
+            return jsonify({"success": True, "skipped": True, "message": f"Entry for {payload['gst_no']} / {payload['month']} already exists — skipped"})
+
         response = supabase.table("gstr1_form3b").insert(payload).execute()
         
         # ── AUTO-LINK: upsert consolidated row into gstr9_9c ──
-        term = get_current_term()
         existing = supabase.table("gstr9_9c").select("id").eq("gst_no", payload["gst_no"]).eq("term", term).execute()
         gstr9_payload = {k: v for k, v in payload.items() if k != "month"}
         if existing.data:
@@ -722,10 +810,16 @@ def import_cmp():
             "quarter": _clean(data.get("quarter")),
             "term": get_current_term()
         }
+
+        # ── DUPLICATE CHECK: skip if gst_no + quarter + term already exists ──
+        term = payload["term"]
+        existing_row = supabase.table("cmp08").select("id").eq("gst_no", payload["gst_no"]).eq("quarter", payload["quarter"]).eq("term", term).execute()
+        if existing_row.data:
+            return jsonify({"success": True, "skipped": True, "message": f"Entry for {payload['gst_no']} / {payload['quarter']} already exists — skipped"})
+
         response = supabase.table("cmp08").insert(payload).execute()
         
         # ── AUTO-LINK: upsert consolidated row into gstr4 ──
-        term = get_current_term()
         existing = supabase.table("gstr4").select("id").eq("gst_no", payload["gst_no"]).eq("term", term).execute()
         gstr4_payload = {k: v for k, v in payload.items() if k != "quarter"}
         if existing.data:
