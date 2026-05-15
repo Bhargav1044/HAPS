@@ -345,7 +345,16 @@
         });
         const monthFilter = document.getElementById("adminUnfilledMonthFilter");
         monthFilter.innerHTML = '<option value="">All Months</option>';
-        [...monthSet].sort().forEach((m) => {
+        
+        const monthOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        [...monthSet].sort((a, b) => {
+          const partsA = a.split(" ");
+          const partsB = b.split(" ");
+          const yA = parseInt(partsA[1] || "0", 10);
+          const yB = parseInt(partsB[1] || "0", 10);
+          if (yA !== yB) return yA - yB;
+          return monthOrder.indexOf(partsA[0]) - monthOrder.indexOf(partsB[0]);
+        }).forEach((m) => {
           monthFilter.innerHTML += `<option value="${m}">${m}</option>`;
         });
       }
@@ -386,27 +395,19 @@
       document.getElementById(`admin-badge-${type}`).textContent =
         `Remaining: ${rows.length}`;
 
-      // Sort rows by month ascending (Jan→Dec  order)
+      // Sort rows chronologically (by year then month)
       const monthOrder = [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
       ];
 
       rows.sort((a, b) => {
-        const mA = (a.month || "").split(" ")[0];
-        const mB = (b.month || "").split(" ")[0];
-
-        return monthOrder.indexOf(mA) - monthOrder.indexOf(mB);
+        const partsA = (a.month || "").split(" ");
+        const partsB = (b.month || "").split(" ");
+        const yA = parseInt(partsA[1] || "0", 10);
+        const yB = parseInt(partsB[1] || "0", 10);
+        if (yA !== yB) return yA - yB;
+        return monthOrder.indexOf(partsA[0]) - monthOrder.indexOf(partsB[0]);
       });
 
       let headers = "";
